@@ -2,8 +2,9 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import App from '../../App'
 import { useAppStore } from '../../store/appStore'
+import type { StoreSnapshot } from '../../../../shared/types'
 
-function snapshot(): Record<string, unknown> {
+function snapshot(): StoreSnapshot {
   const instances = [0, 1, 2, 3].map((id) => ({
     id,
     playlistId: null,
@@ -86,5 +87,29 @@ describe('App 分屏渲染', () => {
     })
     expect(useAppStore.getState().activeInstance).toBe(1)
     expect(views[1].classList.contains('active')).toBe(true)
+  })
+
+  it('urlInputOpen 时渲染网络流浮层，确认后作用于活动格', () => {
+    act(() => {
+      useAppStore.setState({ activeInstance: 0, urlInputOpen: true })
+    })
+    const overlay = container.querySelector('.url-overlay')
+    expect(overlay).not.toBeNull()
+    const input = container.querySelector('.url-input') as HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
+    act(() => {
+      setter?.call(input, 'https://example.com/live.m3u8')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => {
+      const play = Array.from(container.querySelectorAll('.url-actions button')).find(
+        (b) => b.textContent?.includes('播放')
+      ) as HTMLElement
+      play.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const state = useAppStore.getState()
+    expect(state.urlInputOpen).toBe(false)
+    expect(state.playlists).toHaveLength(1)
+    expect(state.instances[0].playlistId).toBe(state.playlists[0].id)
   })
 })

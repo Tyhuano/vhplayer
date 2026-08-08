@@ -70,7 +70,10 @@ export default function App(): React.JSX.Element {
       {urlInputOpen && (
         <UrlInputOverlay
           onCancel={() => useAppStore.getState().closeUrlInput()}
-          onConfirm={(url) => openUrl(activeInstance, url)}
+          onConfirm={(url) => {
+            openUrl(activeInstance, url)
+            useAppStore.getState().closeUrlInput()
+          }}
         />
       )}
     </div>

@@ -128,6 +128,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   toggleGridMode: () => {
+    flushPositions()
+    schedulePersist()
     const state = get()
     if (state.viewMode === 'grid') {
       set({ viewMode: 'single' })
@@ -144,6 +146,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   toggleMini: async () => {
+    flushPositions()
+    schedulePersist()
     const state = get()
     if (state.windowMode === 'mini') {
       await window.api.window.exitMini()

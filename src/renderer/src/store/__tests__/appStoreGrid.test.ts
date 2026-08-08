@@ -129,6 +129,30 @@ describe('分屏 store actions', () => {
     expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(42)
   })
 
+  it('toggleGridMode 切换前记录各格播放位置', () => {
+    useAppStore.setState({ playlists: [makePlaylist()] })
+    useAppStore.getState().updateInstance(0, { playlistId: 'p1', currentIndex: 0 })
+    const v = document.createElement('video')
+    Object.defineProperty(v, 'currentTime', { configurable: true, get: () => 12, set: () => {} })
+    useAppStore.getState().registerVideo(0, v)
+    useAppStore.getState().toggleGridMode()
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(12)
+    useAppStore.getState().toggleGridMode()
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(12)
+  })
+
+  it('toggleMini 切换前记录各格播放位置', async () => {
+    useAppStore.setState({ playlists: [makePlaylist()] })
+    useAppStore.getState().updateInstance(0, { playlistId: 'p1', currentIndex: 0 })
+    const v = document.createElement('video')
+    Object.defineProperty(v, 'currentTime', { configurable: true, get: () => 12, set: () => {} })
+    useAppStore.getState().registerVideo(0, v)
+    await useAppStore.getState().toggleMini()
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(12)
+    await useAppStore.getState().toggleMini()
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(12)
+  })
+
   it('syncWindowStateFromMain 从主进程同步窗口形态与置顶', async () => {
     ;(window.api.window.getState as jest.Mock).mockResolvedValue({
       mode: 'mini',
