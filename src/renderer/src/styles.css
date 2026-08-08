@@ -88,6 +88,20 @@ body,
   background: #000;
 }
 
+.player-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  background: #141416;
+}
+
+.player-view.active {
+  box-shadow: inset 0 0 0 2px #ffffff;
+}
+
 .player-video {
   width: 100%;
   height: 100%;
@@ -722,6 +736,14 @@ body,
 }
 
 .fav-btn.active svg {
+  fill: currentColor;
+}
+
+.pinned-btn.active {
+  color: #fe2c55;
+}
+
+.pinned-btn.active svg {
   fill: currentColor;
 }
 
