@@ -81,7 +81,12 @@ describe('PlayerView 记忆续播', () => {
       video.dispatchEvent(new Event('loadedmetadata'))
     })
     expect(video.currentTime).toBe(30)
-    // 续播成功后旧记忆点被消费清除
+    // seek 完成前记忆点尚未消费
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(30)
+    await act(async () => {
+      video.dispatchEvent(new Event('seeked'))
+    })
+    // seek 完成后记忆点被消费清除
     expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(0)
   })
 

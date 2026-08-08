@@ -81,11 +81,15 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
       const pos = currentItem.lastPosition
       if (pos && pos >= 2 && pos < video.duration - skipThreshold) {
         video.currentTime = pos
-        // 续播成功：消费掉旧的记忆点，进度条标记随之下移，下次离开时再快照新位置
-        if (instance.playlistId) {
-          useAppStore.getState().updateItemLastPosition(instance.playlistId, currentItem.id, 0)
-          schedulePersist()
+        // 等 seek 真正完成后再消费记忆点（避免加载途中误清除）
+        const onSeeked = (): void => {
+          video.removeEventListener('seeked', onSeeked)
+          if (instance.playlistId) {
+            useAppStore.getState().updateItemLastPosition(instance.playlistId, currentItem.id, 0)
+            schedulePersist()
+          }
         }
+        video.addEventListener('seeked', onSeeked)
       }
       video.removeEventListener('loadedmetadata', onMeta)
     }
