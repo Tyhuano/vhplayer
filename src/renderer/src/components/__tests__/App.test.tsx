@@ -69,7 +69,7 @@ describe('App 分屏渲染', () => {
     expect(container.querySelectorAll('.player-view')).toHaveLength(4)
   })
 
-  it('分屏网格保持视频平均宽高比（contain 结构，不随窗口比例错位）', () => {
+  it('分屏网格保持视频平均宽高比（JS 显式 contain 尺寸，不随窗口比例错位）', () => {
     act(() => {
       useAppStore.setState({
         viewMode: 'grid',
@@ -79,10 +79,9 @@ describe('App 分屏渲染', () => {
     expect(container.querySelector('.player-grid-wrap')).not.toBeNull()
     const grid = container.querySelector('.player-grid') as HTMLElement
     expect(grid).not.toBeNull()
-    expect(grid.style.aspectRatio).toBe(String(16 / 9))
-    // calc(100vh * R) 会被 CSSOM 化简为 vh 数值，断言其 contain 结构即可
-    expect(grid.style.width).toContain('min(100%')
-    expect(grid.style.width).toContain('vh')
+    // jsdom 视口 1024x768，16:9 网格：宽 = 视口宽 1024，高 = 1024/(16/9) = 576
+    expect(grid.style.width).toBe('1024px')
+    expect(grid.style.height).toBe('576px')
   })
 
   it('mini + grid → 渲染活动格单格', () => {

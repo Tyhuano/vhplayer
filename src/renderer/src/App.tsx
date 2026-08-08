@@ -63,6 +63,25 @@ export default function App(): React.JSX.Element {
     const r = avgVideoRatio([0, 1, 2, 3].map((id) => s.videoSizes[id] ?? null))
     return r ?? 16 / 9
   })
+  // 网格渲染尺寸：显式 contain 计算（width/height 直接注入，避免 aspect-ratio 被内容撑破）
+  const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null)
+
+  useEffect(() => {
+    const update = (): void => {
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+      let w = vw
+      let h = w / gridRatio
+      if (h > vh) {
+        h = vh
+        w = h * gridRatio
+      }
+      setGridSize({ w: Math.round(w), h: Math.round(h) })
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [gridRatio])
 
   return (
     <div className={`app${isCompact ? ' compact' : ''}`}>
@@ -76,11 +95,11 @@ export default function App(): React.JSX.Element {
           </button>
         </div>
       </div>
-      {isGrid ? (
+      {isGrid && gridSize ? (
         <div className="player-grid-wrap">
           <div
             className="player-grid"
-            style={{ aspectRatio: String(gridRatio), width: `min(100%, calc(100vh * ${gridRatio}))` }}
+            style={{ width: `${gridSize.w}px`, height: `${gridSize.h}px` }}
           >
             {[0, 1, 2, 3].map((id) => (
               <PlayerView key={id} instanceId={id} />

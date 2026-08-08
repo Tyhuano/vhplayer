@@ -106,14 +106,16 @@ body,
   background: #000;
 }
 
-/* 分屏网格：保持视频平均宽高比（contain），窗口任意变化网格按比例自适应居中，
-   不随窗口比例错位；宽高由 App 注入的 aspect-ratio 与 width: min(100%, calc(100vh*R)) 决定 */
+/* 分屏网格：宽高由 App 显式 contain 计算注入（保持视频平均宽高比，窗口任意变化按比例自适应居中，
+   不随窗口比例错位、不被内容撑破） */
 .player-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 2px;
   background: #141416;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .player-view.active::after {
