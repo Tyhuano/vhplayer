@@ -17,7 +17,7 @@ export default function App(): React.JSX.Element {
     // 周期兜底：进程被强杀时也能保留最近播放位置（不更新 UI 记忆点）
     const timer = setInterval(() => {
       void persistPositionOnly().catch(() => {})
-    }, 60000)
+    }, 15000)
     return () => clearInterval(timer)
   }, [])
 
