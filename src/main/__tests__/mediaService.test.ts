@@ -36,6 +36,15 @@ describe('scanMediaFolder', () => {
     expect(live?.sourceType).toBe('m3u8')
   })
 
+  it('每个 item 写入 createdAt（时间排序依据）', async () => {
+    const items = await scanMediaFolder(dir)
+    expect(items.length).toBeGreaterThan(0)
+    for (const item of items) {
+      expect(item.createdAt).toBeDefined()
+      expect(item.createdAt!).toBeLessThanOrEqual(Date.now())
+    }
+  })
+
   it('目录不存在返回空数组', async () => {
     await expect(scanMediaFolder(join(dir, 'not-exist'))).resolves.toEqual([])
   })

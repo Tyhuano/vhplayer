@@ -6,8 +6,9 @@ interface DragOffset {
 }
 
 /**
- * 窗口拖拽：CSS -webkit-app-region: drag 的 JS 兜底。
- * 若 app-region 生效，系统拦截鼠标事件，本逻辑不触发；若失效，由本逻辑接管移动窗口。
+ * 窗口拖拽（纯 JS 实现，不依赖 -webkit-app-region）：
+ * - mousedown 记录鼠标与窗口偏移，mousemove 经 moveTo IPC 移动窗口
+ * - 顶部 8px 内为系统窗口缩放热区，跳过以免与系统 resize 叠加
  */
 export function useWindowDrag(): { onMouseDown: (e: React.MouseEvent<HTMLElement>) => void } {
   const draggingRef = useRef(false)
@@ -36,6 +37,7 @@ export function useWindowDrag(): { onMouseDown: (e: React.MouseEvent<HTMLElement
 
   const onMouseDown = (e: React.MouseEvent<HTMLElement>): void => {
     if (e.button !== 0) return
+    if (e.clientY < 8) return
     void window.api.window.getState().then((s) => {
       offsetRef.current = { x: e.screenX - s.bounds.x, y: e.screenY - s.bounds.y }
       draggingRef.current = true

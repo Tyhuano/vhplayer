@@ -12,7 +12,7 @@ export async function scanMediaFolder(folder: string): Promise<MediaItem[]> {
       .filter((e) => e.isFile() && SUPPORTED_EXTENSIONS.has(extname(e.name).toLowerCase()))
       .map((e) => {
         const path = join(folder, e.name)
-        return { id: uid(), title: titleFromPath(path), sourceType: guessSourceType(path), value: path }
+        return { id: uid(), title: titleFromPath(path), sourceType: guessSourceType(path), value: path, createdAt: Date.now() }
       })
   } catch {
     return []
