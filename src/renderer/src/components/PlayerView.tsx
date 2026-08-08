@@ -81,11 +81,17 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
       const pos = currentItem.lastPosition
       if (pos && pos >= 2 && pos < video.duration - skipThreshold) {
         video.currentTime = pos
+        // 续播成功：消费掉旧的记忆点，进度条标记随之下移，下次离开时再快照新位置
+        if (instance.playlistId) {
+          useAppStore.getState().updateItemLastPosition(instance.playlistId, currentItem.id, 0)
+          schedulePersist()
+        }
       }
       video.removeEventListener('loadedmetadata', onMeta)
     }
     video.addEventListener('loadedmetadata', onMeta)
     return () => video.removeEventListener('loadedmetadata', onMeta)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItem?.id, settings.autoResume])
 
   const handleOpenFiles = async (): Promise<void> => {

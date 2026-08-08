@@ -81,6 +81,8 @@ describe('PlayerView 记忆续播', () => {
       video.dispatchEvent(new Event('loadedmetadata'))
     })
     expect(video.currentTime).toBe(30)
+    // 续播成功后旧记忆点被消费清除
+    expect(useAppStore.getState().playlists[0].items[0].lastPosition).toBe(0)
   })
 
   it('autoResume 关闭时不恢复位置', async () => {
