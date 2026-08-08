@@ -19,7 +19,7 @@ export default function App(): React.JSX.Element {
   const hydrate = useAppStore((s) => s.hydrate)
   useShortcuts()
   const { onMouseDown } = useWindowDrag()
-  const { onMouseDown: onResizeStart } = useWindowResize()
+  const { onPointerDown: onResizeStart } = useWindowResize()
 
   useEffect(() => {
     window.api.store.getAll().then((snapshot) => hydrate(snapshot))
@@ -64,7 +64,7 @@ export default function App(): React.JSX.Element {
       ) : (
         <PlayerView instanceId={activeInstance} />
       )}
-      <div className="resize-handle" onMouseDown={onResizeStart} title="调整窗口大小" />
+      <div className="resize-handle" onPointerDown={onResizeStart} title="调整窗口大小" />
       <SidePanel />
       <ContextMenu />
       {urlInputOpen && (
