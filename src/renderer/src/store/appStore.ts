@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { AppState, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot, WindowMode } from '../../../shared/types'
 import { reorderItems as reorderList, type SortMode } from './playlistUtils'
-import { computeGridBounds } from '../gridLayout'
+import { computeGridBounds, type VideoSize } from '../gridLayout'
 
 export const RATES = [0.5, 1, 1.5, 2, 3]
 export const MODES: PlayerInstance['playMode'][] = ['order', 'loop', 'random']
@@ -24,7 +24,7 @@ export interface AppStore extends AppState {
   /** 各实例已挂载 video 元素引用（纯 UI 状态，不持久化） */
   videoRegistry: Record<number, HTMLVideoElement | null>
   /** 各实例视频源尺寸（纯 UI 状态，不持久化；null 表示未知） */
-  videoSizes: Record<number, { w: number; h: number } | null>
+  videoSizes: Record<number, VideoSize | null>
   /** 窗口形态（与主进程 WindowManager 状态机同步） */
   windowMode: WindowMode
   /** 是否置顶（仅 alwaysOnTop，不触碰 bounds/形态） */
@@ -81,7 +81,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   viewMode: 'single',
   activeInstance: 0,
   videoRegistry: { 0: null, 1: null, 2: null, 3: null } as Record<number, HTMLVideoElement | null>,
-  videoSizes: { 0: null, 1: null, 2: null, 3: null } as Record<number, { w: number; h: number } | null>,
+  videoSizes: { 0: null, 1: null, 2: null, 3: null } as Record<number, VideoSize | null>,
   windowMode: 'window',
   pinned: false,
   instances: [0, 1, 2, 3].map(emptyInstance),
@@ -137,6 +137,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ viewMode: 'grid' })
     void (async () => {
       const win = await window.api.window.getState()
+      if (get().viewMode !== 'grid') return
       const bounds = computeGridBounds(sizes, win.bounds)
       if (bounds) await window.api.window.resizeTo(bounds.x, bounds.y, bounds.width, bounds.height)
     })()

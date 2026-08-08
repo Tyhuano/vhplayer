@@ -85,6 +85,22 @@ describe('分屏 store actions', () => {
     expect(window.api.window.resizeTo).toHaveBeenCalledTimes(1)
   })
 
+  it('快速进-退分屏：已退出的过期异步回调不执行 resizeTo', async () => {
+    useAppStore.getState().setVideoSize(0, 1920, 1080)
+    let resolveGetState: (v: { mode: string; bounds: { x: number; y: number; width: number; height: number }; pinned: boolean }) => void
+    ;(window.api.window.getState as jest.Mock).mockReturnValue(
+      new Promise((r) => {
+        resolveGetState = r
+      })
+    )
+    useAppStore.getState().toggleGridMode()
+    useAppStore.getState().toggleGridMode()
+    expect(useAppStore.getState().viewMode).toBe('single')
+    resolveGetState!({ mode: 'window', bounds: { x: 0, y: 0, width: 960, height: 540 }, pinned: false })
+    await new Promise((r) => setTimeout(r, 0))
+    expect(window.api.window.resizeTo).not.toHaveBeenCalled()
+  })
+
   it('toggleMini：window→mini→window 联动 windowMode', async () => {
     await useAppStore.getState().toggleMini()
     expect(window.api.window.enterMini).toHaveBeenCalled()
