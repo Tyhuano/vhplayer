@@ -284,20 +284,29 @@ git commit -m "feat: 共享源工具（类型判定/file URL/标题提取）"
 
 - [ ] **Step 1: 写失败测试 src/renderer/src/player/__tests__/playerCore.test.ts**
 
+（注意：jest 30 中 `mock.instances` 对返回对象的 mockImplementation 不再记录，故 Hls mock 通过外部 `__instances` 数组收集实例）
+
 ```ts
-import { PlayerCore, type PlayerErrorKind } from '../playerCore'
+import { PlayerCore } from '../playerCore'
 import type { MediaItem } from '../../../../shared/types'
 
 jest.mock('hls.js', () => {
-  class HlsMock {
-    static isSupported = jest.fn(() => true)
-    attachMedia = jest.fn()
-    loadSource = jest.fn()
-    destroy = jest.fn()
-    on = jest.fn()
-    off = jest.fn()
-    config = {}
-  }
+  const instances: Array<Record<string, jest.Mock>> = []
+  const HlsMock = jest.fn().mockImplementation(() => {
+    const inst = {
+      attachMedia: jest.fn(),
+      loadSource: jest.fn(),
+      destroy: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      config: {}
+    }
+    instances.push(inst)
+    return inst
+  })
+  HlsMock.isSupported = jest.fn(() => true)
+  HlsMock.Events = { ERROR: 'hlsError' }
+  HlsMock.__instances = instances
   return { __esModule: true, default: HlsMock }
 })
 
