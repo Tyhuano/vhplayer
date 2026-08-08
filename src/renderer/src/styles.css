@@ -17,13 +17,14 @@ body,
 }
 
 .app-titlebar {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 32px;
   -webkit-app-region: drag;
-  z-index: 5;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent);
 }
 
 .player-view {
@@ -86,6 +87,15 @@ body,
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
+}
+
+.player-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
 }
 
 .player-actions button:hover,
@@ -163,6 +173,15 @@ body,
   cursor: pointer;
   padding: 2px 4px;
   min-width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.rate-label {
+  font-size: 11px;
+  line-height: 1;
 }
 
 .btn-row button:hover {
@@ -326,9 +345,11 @@ body,
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 16px;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .panel-close:hover {
@@ -446,8 +467,10 @@ body,
   border: none;
   color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
-  font-size: 13px;
-  padding: 0 4px;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .panel-item-del:hover {
@@ -487,6 +510,10 @@ body,
 
 .fav-btn.active {
   color: #fe2c55;
+}
+
+.fav-btn.active svg {
+  fill: currentColor;
 }
 
 .context-menu {

@@ -6,6 +6,7 @@ import { useAutoHide } from '../hooks/useAutoHide'
 import { openFiles, openFolder, openUrl, openUrlInput } from '../store/openMedia'
 import ControlsBar from './ControlsBar'
 import UrlInputOverlay from './UrlInputOverlay'
+import { Icon } from './icons'
 
 interface PlayerViewProps {
   instanceId: number
@@ -121,22 +122,22 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
       <div className="player-title">{currentItem?.title ?? 'VHplayer'}</div>
       <div className="player-actions">
         <button title="打开文件" onClick={() => void openFiles(instanceId)}>
-          打开
+          <Icon name="file" />
         </button>
         <button title="打开文件夹" onClick={() => void openFolder(instanceId)}>
-          文件夹
+          <Icon name="folder" />
         </button>
         <button title="打开网络流" onClick={openUrlInput}>
-          网络流
+          <Icon name="globe" />
         </button>
         <button title="播放列表" onClick={() => useAppStore.getState().togglePanel()}>
-          列表
+          <Icon name="list" />
         </button>
         <button title="置顶小窗" onClick={() => void handleToggleMini()}>
-          置顶
+          <Icon name="pin" />
         </button>
         <button title="全屏" onClick={() => void window.api.window.toggleFullscreen()}>
-          全屏
+          <Icon name="maximize" />
         </button>
       </div>
       {error && (

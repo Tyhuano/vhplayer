@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { MODE_LABEL, useAppStore } from '../store/appStore'
+import { Icon, type IconName } from './icons'
+
+const MODE_ICON: Record<string, IconName> = { order: 'list', loop: 'repeat', random: 'shuffle' }
 
 interface ControlsBarProps {
   instanceId: number
@@ -94,7 +97,7 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
       </div>
       <div className="btn-row">
         <button title="上一集" onClick={() => useAppStore.getState().prevInInstance(instanceId)}>
-          ⏮
+          <Icon name="skipBack" />
         </button>
         <button
           title={instance.isPlaying ? '暂停' : '播放'}
@@ -105,27 +108,31 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
             else video.pause()
           }}
         >
-          {instance.isPlaying ? '⏸' : '▶'}
+          <Icon name={instance.isPlaying ? 'pause' : 'play'} />
         </button>
         <button title="下一集" onClick={() => useAppStore.getState().nextInInstance(instanceId)}>
-          ⏭
+          <Icon name="skipForward" />
         </button>
         <button
           title={isFav ? '取消收藏' : '收藏'}
           className={`fav-btn${isFav ? ' active' : ''}`}
           onClick={() => useAppStore.getState().toggleFavorite()}
         >
-          {isFav ? '♥' : '♡'}
+          <Icon name="heart" />
         </button>
-        <button title="倍速" onClick={() => useAppStore.getState().cycleRate(instanceId)}>
-          {instance.rate}x
+        <button title={`倍速 ${instance.rate}x`} onClick={() => useAppStore.getState().cycleRate(instanceId)}>
+          <Icon name="zap" />
+          <span className="rate-label">{instance.rate}x</span>
         </button>
-        <button title="播放模式" onClick={() => useAppStore.getState().cyclePlayMode(instanceId)}>
-          {MODE_LABEL[instance.playMode] ?? instance.playMode}
+        <button
+          title={`播放模式：${MODE_LABEL[instance.playMode] ?? instance.playMode}`}
+          onClick={() => useAppStore.getState().cyclePlayMode(instanceId)}
+        >
+          <Icon name={MODE_ICON[instance.playMode] ?? 'list'} />
         </button>
         <div className="volume-wrap">
           <button title={muted ? '取消静音' : '静音'} onClick={toggleMuted}>
-            {muted ? '🔇' : '🔊'}
+            <Icon name={muted ? 'volumeX' : 'volume'} />
           </button>
           <input
             type="range"

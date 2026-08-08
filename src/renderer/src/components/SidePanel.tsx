@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { sortItems, type SortMode } from '../store/playlistUtils'
 import { openFiles, openFolder, openUrlInput } from '../store/openMedia'
+import { Icon } from './icons'
 
 const SORT_OPTIONS: Array<{ mode: SortMode; label: string }> = [
   { mode: 'name', label: '名称' },
@@ -48,7 +49,7 @@ export default function SidePanel(): React.JSX.Element | null {
             </button>
           </div>
           <button className="panel-close" title="关闭" onClick={() => state.closePanel()}>
-            ×
+            <Icon name="x" />
           </button>
         </div>
         {panelTab === 'lists' ? (
@@ -123,7 +124,7 @@ export default function SidePanel(): React.JSX.Element | null {
                             state.removeFromPlaylist(effectiveListId ?? '', item.id)
                           }}
                         >
-                          ×
+                          <Icon name="trash" size={14} />
                         </button>
                       </li>
                     ))}
@@ -158,7 +159,7 @@ export default function SidePanel(): React.JSX.Element | null {
                         state.removeFromFavorites(item.id)
                       }}
                     >
-                      ♥
+                      <Icon name="heart" size={14} />
                     </button>
                   </li>
                 ))}
