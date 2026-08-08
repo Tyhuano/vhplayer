@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react'
 
-const MIN_WIDTH = 480
-const MIN_HEIGHT = 320
-
 interface ResizeStart {
   winX: number
   winY: number
@@ -13,7 +10,8 @@ interface ResizeStart {
  * resizable: false 后系统缩放热区消失，缩放统一由本手柄经 resizeTo IPC 完成。
  * 使用 Pointer Events + setPointerCapture：按住手柄后鼠标拖出窗口，
  * pointermove 仍持续派发到被捕获元素——否则向窗外放大时事件丢失，
- * 窗口会卡在鼠标移出窗口瞬间的尺寸（此前 bug：分屏格子高度无法适应放大后的窗口）。
+ * 窗口会卡在鼠标移出窗口瞬间的尺寸。
+ * 无最小尺寸限制（窗口可任意缩小，小窗口由紧凑模式接管 UI）。
  */
 export function useWindowResize(): { onPointerDown: (e: React.PointerEvent<HTMLElement>) => void } {
   const resizingRef = useRef(false)
@@ -26,8 +24,8 @@ export function useWindowResize(): { onPointerDown: (e: React.PointerEvent<HTMLE
       void window.api.window.resizeTo(
         start.winX,
         start.winY,
-        Math.max(MIN_WIDTH, e.screenX - start.winX),
-        Math.max(MIN_HEIGHT, e.screenY - start.winY)
+        Math.max(1, Math.round(e.screenX - start.winX)),
+        Math.max(1, Math.round(e.screenY - start.winY))
       )
     }
     const onPointerUp = (): void => {

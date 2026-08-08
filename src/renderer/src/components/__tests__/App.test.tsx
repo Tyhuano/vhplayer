@@ -89,6 +89,33 @@ describe('App 分屏渲染', () => {
     expect(views[1].classList.contains('active')).toBe(true)
   })
 
+  it('窗口小于 480x320 时施加 compact 类（仅保留播放区域）', () => {
+    const origW = window.innerWidth
+    const origH = window.innerHeight
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 400 })
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 300 })
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+    expect(container.querySelector('.app')?.classList.contains('compact')).toBe(true)
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: origW })
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: origH })
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+    expect(container.querySelector('.app')?.classList.contains('compact')).toBe(false)
+  })
+
+  it('mini 模式下窗口小但不施加 compact（保留控制列）', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 420 })
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 280 })
+    act(() => {
+      useAppStore.setState({ windowMode: 'mini' })
+      window.dispatchEvent(new Event('resize'))
+    })
+    expect(container.querySelector('.app')?.classList.contains('compact')).toBe(false)
+  })
+
   it('urlInputOpen 时渲染网络流浮层，确认后作用于活动格', () => {
     act(() => {
       useAppStore.setState({ activeInstance: 0, urlInputOpen: true })

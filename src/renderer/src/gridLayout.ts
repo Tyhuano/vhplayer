@@ -15,9 +15,7 @@ export interface ScreenLimit {
   h: number
 }
 
-const MIN_W = 480
-const MIN_H = 320
-/** 分屏最小舒适宽度：每格至少 480 宽，2 列共 960 */
+/** 分屏最小舒适宽度：每格至少 480 宽，2 列共 960（自适应基准，非硬性最小限制） */
 const MIN_GRID_W = 960
 
 /**
@@ -27,7 +25,7 @@ const MIN_GRID_W = 960
  *   大窗口保持用户宽度心智
  * - 高度 = 宽 / 平均宽高比（2x2 网格中每格宽高比 = 窗口宽高比，contain 下无额外黑边）
  * - screen 提供时钳制到工作区 95%（先高后宽，保持比例），避免极端比例高度爆屏
- * - 下限 480x320 与主进程 resizeTo 钳制一致
+ * - 无最小尺寸下限（取消最小限制，小窗口由渲染进程紧凑模式接管 UI）
  * - 返回 null 表示保持当前窗口
  */
 export function computeGridBounds(
@@ -52,5 +50,5 @@ export function computeGridBounds(
       height = Math.round(width / avgRatio)
     }
   }
-  return { x: current.x, y: current.y, width: Math.max(MIN_W, width), height: Math.max(MIN_H, height) }
+  return { x: current.x, y: current.y, width: Math.max(1, width), height: Math.max(1, height) }
 }

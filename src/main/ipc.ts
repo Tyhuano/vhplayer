@@ -35,11 +35,19 @@ export function registerIpc(win: BrowserWindow): void {
   })
   ipcMain.handle(IPC.windowResizeTo, (_event, x: number, y: number, width: number, height: number) => {
     const area = screen.getDisplayMatching(win.getBounds()).workArea
+    // 无最小尺寸限制（小窗口由渲染进程紧凑模式接管 UI），仅钳制工作区上限
     expectedSize = [
-      Math.min(Math.max(480, Math.round(width)), Math.round(area.width * 1.5)),
-      Math.min(Math.max(320, Math.round(height)), Math.round(area.height * 1.5))
+      Math.min(Math.max(1, Math.round(width)), Math.round(area.width * 1.5)),
+      Math.min(Math.max(1, Math.round(height)), Math.round(area.height * 1.5))
     ]
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
+    console.log('[ipc] resizeTo target', Math.round(width), 'x', Math.round(height), '=> actual', JSON.stringify(win.getBounds()))
+    void win.webContents
+      .executeJavaScript(
+        `JSON.stringify({iw: window.innerWidth, ih: window.innerHeight, grid: (document.querySelector('.player-grid') ? document.querySelector('.player-grid').getBoundingClientRect().width + 'x' + document.querySelector('.player-grid').getBoundingClientRect().height : 'none'), app: document.querySelector('.app') ? document.querySelector('.app').getBoundingClientRect().width + 'x' + document.querySelector('.app').getBoundingClientRect().height : 'none'})`
+      )
+      .then((v) => console.log('[view]', v))
+      .catch(() => {})
   })
   ipcMain.handle(IPC.windowMinimize, () => win.minimize())
   ipcMain.handle(IPC.windowClose, () => win.close())

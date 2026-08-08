@@ -77,13 +77,13 @@ describe('useWindowResize', () => {
     expect(window.api.window.resizeTo).toHaveBeenCalledWith(0, 0, 1500, 900)
   })
 
-  it('尺寸不小于最小约束（480x320）', async () => {
+  it('无最小尺寸约束（窗口可任意缩小，紧凑模式接管 UI）', async () => {
     pressHandle()
     await act(async () => {})
     document.dispatchEvent(
       new PointerEventMock('pointermove', { bubbles: true, pointerId: 1, screenX: 200, screenY: 150 })
     )
-    expect(window.api.window.resizeTo).toHaveBeenCalledWith(0, 0, 480, 320)
+    expect(window.api.window.resizeTo).toHaveBeenCalledWith(0, 0, 200, 150)
   })
 
   it('松开指针后不再调整', async () => {

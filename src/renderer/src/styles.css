@@ -26,6 +26,14 @@ body,
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), transparent);
 }
 
+/* 紧凑模式：窗口小于可操作尺寸时仅保留播放区域，其余 UI 全部隐藏（拖大窗口自动恢复） */
+.app.compact .app-titlebar,
+.app.compact .player-title,
+.app.compact .player-actions,
+.app.compact .controls-bar {
+  display: none;
+}
+
 .titlebar-buttons {
   position: absolute;
   top: 0;

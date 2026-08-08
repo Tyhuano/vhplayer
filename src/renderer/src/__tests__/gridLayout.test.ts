@@ -51,10 +51,10 @@ describe('computeGridBounds', () => {
     expect(r?.y).toBe(20)
   })
 
-  it('竖屏 9:16 视频 → 高度钳制到工作区 95%、宽度随之回缩并保下限 480', () => {
-    // 宽 960 → 高 = 960/0.5625 = 1706 → 钳 maxH = 821 → W = 821×9/16 = 461.8 → 462 → 下限 480
+  it('竖屏 9:16 视频 → 高度钳制到工作区 95%、宽度随比例回缩（无最小下限）', () => {
+    // 宽 960 → 高 = 960/0.5625 = 1706 → 钳 maxH = 821 → W = 821×9/16 = 461.8 → 462
     const r = computeGridBounds([{ w: 1080, h: 1920 }, null, null, null], cur, screen)
-    expect(r).toEqual({ x: 100, y: 50, width: 480, height: 821 })
+    expect(r).toEqual({ x: 100, y: 50, width: 462, height: 821 })
   })
 
   it('极宽 21:9 视频不超屏幕宽度', () => {
@@ -63,10 +63,10 @@ describe('computeGridBounds', () => {
     expect(r).toEqual({ x: 100, y: 50, width: 960, height: 411 })
   })
 
-  it('screen 钳制下限 480x320', () => {
+  it('竖屏钳制后无 480 下限（取消最小限制）', () => {
     const tiny = { x: 0, y: 0, width: 480, height: 320 }
+    // 宽 max(480,960)=960 → 高 1706 → 钳 maxH 821 → W = 821×0.5625 = 462（不再被 480 撑大）
     const r = computeGridBounds([{ w: 1080, h: 1920 }, null, null, null], tiny, screen)
-    expect(r?.width).toBeGreaterThanOrEqual(480)
-    expect(r?.height).toBeGreaterThanOrEqual(320)
+    expect(r).toEqual({ x: 0, y: 0, width: 462, height: 821 })
   })
 })

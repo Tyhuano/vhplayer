@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import PlayerView from './components/PlayerView'
 import SidePanel from './components/SidePanel'
 import ContextMenu from './components/ContextMenu'
@@ -11,15 +11,29 @@ import { useShortcuts } from './hooks/useShortcuts'
 import { useWindowDrag } from './hooks/useWindowDrag'
 import { useWindowResize } from './hooks/useWindowResize'
 
+/** 紧凑模式阈值：窗口小于该尺寸时仅保留播放区域（无最小尺寸限制，小窗由紧凑模式接管 UI） */
+const COMPACT_MIN_W = 480
+const COMPACT_MIN_H = 320
+
 export default function App(): React.JSX.Element {
   const activeInstance = useAppStore((s) => s.activeInstance)
   const viewMode = useAppStore((s) => s.viewMode)
   const windowMode = useAppStore((s) => s.windowMode)
   const urlInputOpen = useAppStore((s) => s.urlInputOpen)
   const hydrate = useAppStore((s) => s.hydrate)
+  const [compact, setCompact] = useState(false)
   useShortcuts()
   const { onMouseDown } = useWindowDrag()
   const { onPointerDown: onResizeStart } = useWindowResize()
+
+  useEffect(() => {
+    const update = (): void => {
+      setCompact(window.innerWidth < COMPACT_MIN_W || window.innerHeight < COMPACT_MIN_H)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   useEffect(() => {
     window.api.store.getAll().then((snapshot) => hydrate(snapshot))
@@ -42,9 +56,10 @@ export default function App(): React.JSX.Element {
   }, [])
 
   const isGrid = viewMode === 'grid' && windowMode !== 'mini'
+  const isCompact = compact && windowMode !== 'mini'
 
   return (
-    <div className="app">
+    <div className={`app${isCompact ? ' compact' : ''}`}>
       <div className="app-titlebar" onMouseDown={onMouseDown}>
         <div className="titlebar-buttons">
           <button title="最小化" onClick={() => void window.api.window.minimize()}>
