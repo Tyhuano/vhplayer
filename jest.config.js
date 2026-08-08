@@ -2,10 +2,10 @@
 module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.test.ts'],
+  testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   setupFiles: ['<rootDir>/tests/setup.ts'],
   transform: {
-    '^.+\\.ts$': [
+    '^.+\\.tsx?$': [
       'ts-jest',
       {
         tsconfig: {
@@ -16,10 +16,11 @@ module.exports = {
           target: 'ES2022',
           lib: ['ES2022', 'DOM', 'DOM.Iterable'],
           types: ['node', 'jest'],
+          jsx: 'react-jsx',
           skipLibCheck: true
         }
       }
     ]
   },
-  moduleFileExtensions: ['ts', 'js', 'json']
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json']
 }

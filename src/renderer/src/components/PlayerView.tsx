@@ -25,10 +25,7 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   const playlist = playlists.find((p) => p.id === instance.playlistId) ?? null
   const currentItem = playlist?.items[instance.currentIndex] ?? null
 
-  const currentItemRef = useRef(currentItem)
-  currentItemRef.current = currentItem
-  const lastSaveMsRef = useRef(0)
-  const lastPosRef = useRef(0)
+  const prevItemRef = useRef<{ playlistId: string; itemId: string } | null>(null)
 
   useEffect(() => {
     const video = videoRef.current
@@ -37,21 +34,7 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
       onPlaying: () => useAppStore.getState().updateInstance(instanceId, { isPlaying: true }),
       onPaused: () => useAppStore.getState().updateInstance(instanceId, { isPlaying: false }),
       onEnded: () => useAppStore.getState().nextInInstance(instanceId),
-      onError: (kind, message) => setError({ kind, message }),
-      onTimeUpdate: () => {
-        const item = currentItemRef.current
-        const ins = useAppStore.getState().instances[instanceId]
-        if (item && ins.playlistId) {
-          const now = video.currentTime
-          const nowMs = Date.now()
-          if (now > 0 && (nowMs - lastSaveMsRef.current > 10000 || now < lastPosRef.current - 5)) {
-            lastSaveMsRef.current = nowMs
-            lastPosRef.current = now
-            useAppStore.getState().updateItemLastPosition(ins.playlistId, item.id, now)
-            schedulePersist()
-          }
-        }
-      }
+      onError: (kind, message) => setError({ kind, message })
     })
     coreRef.current = core
     return () => {
@@ -64,8 +47,14 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const core = coreRef.current
     if (!core || !currentItem) return
     setError(null)
-    lastSaveMsRef.current = Date.now()
-    lastPosRef.current = 0
+    // 离开上一个视频时快照其退出位置（关闭时由 flushPositions 兜底）
+    const video = videoRef.current
+    const prev = prevItemRef.current
+    if (prev && video && video.currentTime > 2) {
+      useAppStore.getState().updateItemLastPosition(prev.playlistId, prev.itemId, video.currentTime)
+      schedulePersist()
+    }
+    prevItemRef.current = instance.playlistId ? { playlistId: instance.playlistId, itemId: currentItem.id } : null
     void (async () => {
       await core.load(currentItem)
       core.setVolume(instance.volume)
