@@ -20,6 +20,8 @@ Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
   set: () => {}
 })
 
+;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+
 Object.defineProperty(window, 'api', {
   configurable: true,
   value: {

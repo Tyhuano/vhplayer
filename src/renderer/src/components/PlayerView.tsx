@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { persistNow, schedulePersist } from '../store/appStore'
 import { PlayerCore, type PlayerErrorKind } from '../player/playerCore'
-import { mediaItemFromPath, mediaItemFromUrl } from '../../../shared/source'
 import { useAutoHide } from '../hooks/useAutoHide'
+import { openFiles, openFolder, openUrl, openUrlInput } from '../store/openMedia'
 import ControlsBar from './ControlsBar'
 import UrlInputOverlay from './UrlInputOverlay'
 
@@ -15,11 +15,11 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   const videoRef = useRef<HTMLVideoElement>(null)
   const coreRef = useRef<PlayerCore | null>(null)
   const [error, setError] = useState<{ kind: PlayerErrorKind; message: string } | null>(null)
-  const [showUrlInput, setShowUrlInput] = useState(false)
 
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
   const settings = useAppStore((s) => s.settings)
+  const urlInputOpen = useAppStore((s) => s.urlInputOpen)
   const { visible, onMouseMove, onMouseEnter, onMouseLeave } = useAutoHide()
 
   const playlist = playlists.find((p) => p.id === instance.playlistId) ?? null
@@ -98,42 +98,6 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItem?.id, settings.autoResume])
 
-  const handleOpenFiles = async (): Promise<void> => {
-    const paths = await window.api.dialog.openFile()
-    if (!paths || paths.length === 0) return
-    const items = paths.map(mediaItemFromPath)
-    const playlist = {
-      id: crypto.randomUUID(),
-      name: items[0].title,
-      items,
-      createdAt: Date.now()
-    }
-    useAppStore.getState().addPlaylist(playlist)
-    useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
-  }
-
-  const handleOpenFolder = async (): Promise<void> => {
-    const folder = await window.api.dialog.openFolder()
-    if (!folder) return
-    const items = await window.api.media.scanFolder(folder)
-    if (items.length === 0) return
-    const playlist = {
-      id: crypto.randomUUID(),
-      name: items[0].title,
-      items,
-      createdAt: Date.now()
-    }
-    useAppStore.getState().addPlaylist(playlist)
-    useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
-  }
-
-  const handleOpenUrl = (url: string): void => {
-    const item = mediaItemFromUrl(url.trim())
-    const playlist = { id: crypto.randomUUID(), name: item.title, items: [item], createdAt: Date.now() }
-    useAppStore.getState().addPlaylist(playlist)
-    useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
-  }
-
   const handleToggleMini = async (): Promise<void> => {
     const state = await window.api.window.getState()
     if (state.mode === 'mini') await window.api.window.exitMini()
@@ -153,17 +117,20 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
 
   return (
     <div className="player-view" onMouseMove={onMouseMove} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <video ref={videoRef} className="player-video" playsInline />
+      <video ref={videoRef} className="player-video" style={{ objectFit: instance.scaleMode }} playsInline />
       <div className="player-title">{currentItem?.title ?? 'VHplayer'}</div>
       <div className="player-actions">
-        <button title="打开文件" onClick={() => void handleOpenFiles()}>
+        <button title="打开文件" onClick={() => void openFiles(instanceId)}>
           打开
         </button>
-        <button title="打开文件夹" onClick={() => void handleOpenFolder()}>
+        <button title="打开文件夹" onClick={() => void openFolder(instanceId)}>
           文件夹
         </button>
-        <button title="打开网络流" onClick={() => setShowUrlInput(true)}>
+        <button title="打开网络流" onClick={openUrlInput}>
           网络流
+        </button>
+        <button title="播放列表" onClick={() => useAppStore.getState().togglePanel()}>
+          列表
         </button>
         <button title="置顶小窗" onClick={() => void handleToggleMini()}>
           置顶
@@ -186,7 +153,12 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         </div>
       )}
       <ControlsBar instanceId={instanceId} visible={visible} />
-      {showUrlInput && <UrlInputOverlay onCancel={() => setShowUrlInput(false)} onConfirm={handleOpenUrl} />}
+      {urlInputOpen && (
+        <UrlInputOverlay
+          onCancel={() => useAppStore.getState().closeUrlInput()}
+          onConfirm={(url) => openUrl(instanceId, url)}
+        />
+      )}
     </div>
   )
 }
