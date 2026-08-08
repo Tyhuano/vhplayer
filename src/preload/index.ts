@@ -8,7 +8,10 @@ const api: IpcApi = {
     toggleFullscreen: () => ipcRenderer.invoke(IPC.windowToggleFullscreen),
     enterMini: () => ipcRenderer.invoke(IPC.windowEnterMini),
     exitMini: () => ipcRenderer.invoke(IPC.windowExitMini),
-    getState: () => ipcRenderer.invoke(IPC.windowGetState)
+    getState: () => ipcRenderer.invoke(IPC.windowGetState),
+    moveTo: (x, y) => ipcRenderer.invoke(IPC.windowMoveTo, x, y),
+    minimize: () => ipcRenderer.invoke(IPC.windowMinimize),
+    close: () => ipcRenderer.invoke(IPC.windowClose)
   },
   dialog: {
     openFolder: () => ipcRenderer.invoke(IPC.dialogOpenFolder),

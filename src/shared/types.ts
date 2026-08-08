@@ -65,6 +65,9 @@ export const IPC = {
   windowEnterMini: 'window:enter-mini',
   windowExitMini: 'window:exit-mini',
   windowGetState: 'window:get-state',
+  windowMoveTo: 'window:move-to',
+  windowMinimize: 'window:minimize',
+  windowClose: 'window:close',
   dialogOpenFolder: 'dialog:open-folder',
   dialogOpenFile: 'dialog:open-file',
   dialogSave: 'dialog:save',
@@ -83,6 +86,9 @@ export interface IpcApi {
     enterMini(): Promise<void>
     exitMini(): Promise<void>
     getState(): Promise<WindowState>
+    moveTo(x: number, y: number): Promise<void>
+    minimize(): Promise<void>
+    close(): Promise<void>
   }
   dialog: {
     openFolder(): Promise<string | null>

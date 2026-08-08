@@ -21,6 +21,11 @@ export function registerIpc(win: BrowserWindow): void {
   ipcMain.handle(IPC.windowEnterMini, () => windowManager.enterMini())
   ipcMain.handle(IPC.windowExitMini, () => windowManager.exitMini())
   ipcMain.handle(IPC.windowGetState, () => windowManager.getState())
+  ipcMain.handle(IPC.windowMoveTo, (_event, x: number, y: number) => {
+    win.setPosition(Math.round(x), Math.round(y))
+  })
+  ipcMain.handle(IPC.windowMinimize, () => win.minimize())
+  ipcMain.handle(IPC.windowClose, () => win.close())
 
   ipcMain.handle(IPC.dialogOpenFolder, () => dialog.openFolder())
   ipcMain.handle(IPC.dialogOpenFile, () => dialog.openFile())
