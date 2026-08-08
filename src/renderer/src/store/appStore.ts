@@ -106,7 +106,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   createPlaylist: (name) => {
     const id = crypto.randomUUID()
-    const playlist: Playlist = { id, name: name.trim() || '新建列表', items: [], createdAt: Date.now() }
+    const playlist: Playlist = { id, name: name.trim() || '新建列表', items: [], createdAt: Date.now(), source: 'manual' }
     set({ playlists: [...get().playlists, playlist] })
     schedulePersist()
     return id

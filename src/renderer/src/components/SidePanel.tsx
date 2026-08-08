@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
-import { sortItems, type SortMode } from '../store/playlistUtils'
+import { playlistKindLabel, sortItems, type SortMode } from '../store/playlistUtils'
 import { addUrlToPlaylist, openFiles, openFolder, openUrlInput, pickFilesToAdd } from '../store/openMedia'
 import { Icon } from './icons'
 
@@ -81,6 +81,20 @@ export default function SidePanel(): React.JSX.Element | null {
         </div>
         {panelTab === 'lists' ? (
           <div className="panel-body">
+            {playlists.length > 0 && (
+              <select
+                className="panel-list-select"
+                value={effectiveListId ?? ''}
+                onChange={(e) => setSelectedListId(e.target.value || null)}
+              >
+                {playlists.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.id === instance.playlistId ? '▶ ' : ''}
+                    {playlistKindLabel(p)} · {p.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <div className="panel-add-actions">
               <button onClick={() => void openFiles(activeInstance)}>打开文件</button>
               <button onClick={() => void openFolder(activeInstance)}>文件夹</button>
@@ -185,18 +199,6 @@ export default function SidePanel(): React.JSX.Element | null {
                     </>
                   )}
                 </div>
-                <select
-                  className="panel-list-select"
-                  value={effectiveListId ?? ''}
-                  onChange={(e) => setSelectedListId(e.target.value || null)}
-                >
-                  {playlists.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.id === instance.playlistId ? '▶ ' : ''}
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
                 <div className="panel-add-to-list">
                   <button title="向当前列表添加本地文件" onClick={() => void pickFilesToAdd(effectiveListId ?? '')}>
                     添加文件

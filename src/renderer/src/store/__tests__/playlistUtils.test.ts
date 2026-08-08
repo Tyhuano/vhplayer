@@ -1,5 +1,5 @@
-import { reorderItems, sortItems } from '../playlistUtils'
-import type { MediaItem } from '../../../../shared/types'
+import { playlistKindLabel, reorderItems, sortItems } from '../playlistUtils'
+import type { MediaItem, Playlist } from '../../../../shared/types'
 
 function item(id: string, title: string, createdAt?: number): MediaItem {
   return { id, title, sourceType: 'file', value: `C:\\v\\${id}.mp4`, createdAt }
@@ -47,6 +47,32 @@ describe('playlistUtils', () => {
     it('createdAt 缺失回退 0（视为最旧）', () => {
       const withMissing: MediaItem[] = [item('m1', 'x', 100), item('m2', 'y')]
       expect(sortItems(withMissing, 'timeAsc').map((i) => i.id)).toEqual(['m2', 'm1'])
+    })
+  })
+
+  describe('playlistKindLabel', () => {
+    function playlist(over: Partial<Playlist> = {}): Playlist {
+      return { id: 'p', name: '列表', items: [], createdAt: 1, ...over }
+    }
+
+    it('folder/files 来源为「视频」', () => {
+      expect(playlistKindLabel(playlist({ source: 'folder' }))).toBe('视频')
+      expect(playlistKindLabel(playlist({ source: 'files' }))).toBe('视频')
+    })
+
+    it('url 来源为「流」', () => {
+      expect(playlistKindLabel(playlist({ source: 'url' }))).toBe('流')
+    })
+
+    it('manual 或空列表为「列表」', () => {
+      expect(playlistKindLabel(playlist({ source: 'manual' }))).toBe('列表')
+      expect(playlistKindLabel(playlist())).toBe('列表')
+    })
+
+    it('旧数据无 source 时按首项 sourceType 回退', () => {
+      expect(playlistKindLabel(playlist({ items: [{ id: 'a', title: 'a', sourceType: 'file', value: 'C:\\a.mp4' }] }))).toBe('视频')
+      expect(playlistKindLabel(playlist({ items: [{ id: 'a', title: 'a', sourceType: 'm3u8', value: 'x.m3u8' }] }))).toBe('流')
+      expect(playlistKindLabel(playlist({ items: [{ id: 'a', title: 'a', sourceType: 'flv', value: 'x.flv' }] }))).toBe('流')
     })
   })
 })

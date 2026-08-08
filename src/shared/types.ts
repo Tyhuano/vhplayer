@@ -10,11 +10,15 @@ export interface MediaItem {
   createdAt?: number
 }
 
+export type PlaylistSource = 'folder' | 'files' | 'url' | 'manual'
+
 export interface Playlist {
   id: string
   name: string
   items: MediaItem[]
   createdAt: number
+  /** 列表来源：folder=文件夹、files=文件选择、url=网络流、manual=手动创建 */
+  source?: PlaylistSource
 }
 
 export type PlayMode = 'order' | 'loop' | 'random'

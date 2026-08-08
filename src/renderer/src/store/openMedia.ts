@@ -7,7 +7,7 @@ export async function openFiles(instanceId: number): Promise<void> {
   if (!paths || paths.length === 0) return
   const items = await window.api.media.fromPaths(paths)
   if (items.length === 0) return
-  const playlist: Playlist = { id: crypto.randomUUID(), name: items[0].title, items, createdAt: Date.now() }
+  const playlist: Playlist = { id: crypto.randomUUID(), name: items[0].title, items, createdAt: Date.now(), source: 'files' }
   useAppStore.getState().addPlaylist(playlist)
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
 }
@@ -19,14 +19,26 @@ export async function openFolder(instanceId: number): Promise<void> {
   if (items.length === 0) return
   // 列表名默认取文件夹名（可后续重命名）
   const folderName = folder.split(/[\\/]/).filter(Boolean).pop() ?? items[0].title
-  const playlist: Playlist = { id: crypto.randomUUID(), name: folderName, items, createdAt: Date.now() }
+  const playlist: Playlist = {
+    id: crypto.randomUUID(),
+    name: folderName,
+    items,
+    createdAt: Date.now(),
+    source: 'folder'
+  }
   useAppStore.getState().addPlaylist(playlist)
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
 }
 
 export function openUrl(instanceId: number, url: string): void {
   const item = mediaItemFromUrl(url.trim())
-  const playlist: Playlist = { id: crypto.randomUUID(), name: item.title, items: [item], createdAt: Date.now() }
+  const playlist: Playlist = {
+    id: crypto.randomUUID(),
+    name: item.title,
+    items: [item],
+    createdAt: Date.now(),
+    source: 'url'
+  }
   useAppStore.getState().addPlaylist(playlist)
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
 }

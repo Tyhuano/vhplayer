@@ -1,4 +1,4 @@
-import type { MediaItem } from '../../../shared/types'
+import type { MediaItem, Playlist } from '../../../shared/types'
 
 export type SortMode = 'name' | 'timeAsc' | 'timeDesc'
 
@@ -22,4 +22,15 @@ export function sortItems(items: MediaItem[], mode: SortMode): MediaItem[] {
     default:
       return next
   }
+}
+
+/** 列表来源标识：视频（本地文件）/ 流（网络流）/ 列表（手动创建） */
+export function playlistKindLabel(p: Playlist): string {
+  if (p.source === 'manual') return '列表'
+  if (p.source === 'url') return '流'
+  if (p.source === 'folder' || p.source === 'files') return '视频'
+  const first = p.items[0]
+  if (!first) return '列表'
+  if (first.sourceType === 'm3u8' || first.sourceType === 'flv') return '流'
+  return '视频'
 }

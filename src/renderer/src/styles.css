@@ -574,6 +574,10 @@ body,
   gap: 6px;
 }
 
+.panel-add-to-list .panel-create-input {
+  flex: 1 0 100%;
+}
+
 .panel-add-to-list button {
   flex: 1;
   padding: 5px 0;
