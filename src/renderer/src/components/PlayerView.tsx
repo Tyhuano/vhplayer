@@ -59,10 +59,12 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const core = coreRef.current
     if (!core || !currentItem) return
     setError(null)
-    core.load(currentItem)
-    core.setVolume(instance.volume)
-    core.setRate(instance.rate)
-    if (instance.isPlaying) core.play()
+    void (async () => {
+      await core.load(currentItem)
+      core.setVolume(instance.volume)
+      core.setRate(instance.rate)
+      if (instance.isPlaying) core.play()
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItem?.id, instance.playlistId])
 
@@ -135,8 +137,10 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const item = currentItem
     if (!core || !item) return
     setError(null)
-    core.load(item)
-    core.play()
+    void (async () => {
+      await core.load(item)
+      core.play()
+    })()
   }
 
   return (

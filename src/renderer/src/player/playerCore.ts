@@ -1,5 +1,3 @@
-import Hls from 'hls.js'
-import flvjs from 'flv.js'
 import type { MediaItem } from '../../../shared/types'
 import { toFileUrl } from '../../../shared/source'
 
@@ -15,9 +13,25 @@ export interface PlayerCoreEvents {
   onLoadedMetadata?: (videoWidth: number, videoHeight: number, duration: number) => void
 }
 
+type HlsCtor = typeof import('hls.js').default
+type FlvNamespace = typeof import('flv.js').default
+
+let hlsPromise: Promise<HlsCtor> | null = null
+let flvPromise: Promise<FlvNamespace> | null = null
+
+function loadHlsModule(): Promise<HlsCtor> {
+  if (!hlsPromise) hlsPromise = import('hls.js').then((m) => m.default)
+  return hlsPromise
+}
+
+function loadFlvModule(): Promise<FlvNamespace> {
+  if (!flvPromise) flvPromise = import('flv.js').then((m) => m.default)
+  return flvPromise
+}
+
 export class PlayerCore {
-  private hls: Hls | null = null
-  private flv: flvjs.Player | null = null
+  private hls: InstanceType<HlsCtor> | null = null
+  private flv: ReturnType<FlvNamespace['createPlayer']> | null = null
 
   constructor(
     private readonly video: HTMLVideoElement,
@@ -32,19 +46,26 @@ export class PlayerCore {
     this.video.addEventListener('loadedmetadata', this.handleLoadedMetadata)
   }
 
-  load(item: MediaItem): void {
+  async load(item: MediaItem): Promise<void> {
     this.disposeEngine()
-    if (item.sourceType === 'm3u8' && Hls.isSupported()) {
-      this.loadHls(item.value)
-    } else if (item.sourceType === 'flv' && flvjs.isSupported()) {
-      this.loadFlv(item.value)
-    } else {
-      this.video.src = item.sourceType === 'file' ? toFileUrl(item.value) : item.value
-      this.video.load()
+    if (item.sourceType === 'm3u8') {
+      const Hls = await loadHlsModule()
+      if (Hls.isSupported()) {
+        this.loadHls(Hls, item.value)
+        return
+      }
+    } else if (item.sourceType === 'flv') {
+      const flvjs = await loadFlvModule()
+      if (flvjs.isSupported()) {
+        this.loadFlv(flvjs, item.value)
+        return
+      }
     }
+    this.video.src = item.sourceType === 'file' ? toFileUrl(item.value) : item.value
+    this.video.load()
   }
 
-  private loadHls(url: string): void {
+  private loadHls(Hls: HlsCtor, url: string): void {
     const hls = new Hls()
     this.hls = hls
     hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -56,7 +77,7 @@ export class PlayerCore {
     hls.attachMedia(this.video)
   }
 
-  private loadFlv(url: string): void {
+  private loadFlv(flvjs: FlvNamespace, url: string): void {
     const flv = flvjs.createPlayer({ type: 'flv', url, isLive: false })
     this.flv = flv
     flv.on(flvjs.Events.ERROR, (_type, detail) => {

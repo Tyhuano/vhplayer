@@ -80,9 +80,9 @@ describe('PlayerCore', () => {
     hlsInstances.length = 0
   })
 
-  it('m3u8 源创建 Hls 实例并 attachMedia/loadSource', () => {
+  it('m3u8 源创建 Hls 实例并 attachMedia/loadSource', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/live.m3u8' }))
+    await core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/live.m3u8' }))
     expect(Hls).toHaveBeenCalledTimes(1)
     const hls = hlsInstances[0]
     expect(hls.attachMedia).toHaveBeenCalledWith(video)
@@ -90,9 +90,9 @@ describe('PlayerCore', () => {
     core.destroy()
   })
 
-  it('flv 源创建 flv player 并 attachMediaElement/load/play', () => {
+  it('flv 源创建 flv player 并 attachMediaElement/load/play', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'flv', value: 'https://x.com/live.flv' }))
+    await core.load(makeItem({ sourceType: 'flv', value: 'https://x.com/live.flv' }))
     expect(flvjs.createPlayer).toHaveBeenCalledWith({ type: 'flv', url: 'https://x.com/live.flv', isLive: false })
     const player = (flvjs.createPlayer as unknown as jest.Mock).mock.results[0].value
     expect(player.attachMediaElement).toHaveBeenCalledWith(video)
@@ -101,46 +101,46 @@ describe('PlayerCore', () => {
     core.destroy()
   })
 
-  it('本地文件源直接设置 file:// src，不创建任何引擎', () => {
+  it('本地文件源直接设置 file:// src，不创建任何引擎', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'file', value: 'C:\\v\\a.mp4' }))
+    await core.load(makeItem({ sourceType: 'file', value: 'C:\\v\\a.mp4' }))
     expect(video.src).toBe('file:///C:/v/a.mp4')
     expect(Hls).not.toHaveBeenCalled()
     expect(flvjs.createPlayer).not.toHaveBeenCalled()
     core.destroy()
   })
 
-  it('http 直链直接设置 src', () => {
+  it('http 直链直接设置 src', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'url', value: 'https://x.com/v.mp4' }))
+    await core.load(makeItem({ sourceType: 'url', value: 'https://x.com/v.mp4' }))
     expect(video.src).toBe('https://x.com/v.mp4')
     core.destroy()
   })
 
-  it('重复 load 会销毁上一个引擎（防内存泄漏）', () => {
+  it('重复 load 会销毁上一个引擎（防内存泄漏）', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
+    await core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
     const first = hlsInstances[0]
-    core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/b.m3u8' }))
+    await core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/b.m3u8' }))
     expect(first.destroy).toHaveBeenCalledTimes(1)
     const second = hlsInstances[1]
     expect(second).not.toBe(first)
     core.destroy()
   })
 
-  it('destroy 释放引擎、清空 src 并移除监听', () => {
+  it('destroy 释放引擎、清空 src 并移除监听', async () => {
     const core = new PlayerCore(video)
-    core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
+    await core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
     const hls = hlsInstances[0]
     core.destroy()
     expect(hls.destroy).toHaveBeenCalledTimes(1)
     expect(video.hasAttribute('src')).toBe(false)
   })
 
-  it('hls 致命错误触发 onError 并销毁引擎', () => {
+  it('hls 致命错误触发 onError 并销毁引擎', async () => {
     const onError = jest.fn()
     const core = new PlayerCore(video, { onError })
-    core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
+    await core.load(makeItem({ sourceType: 'm3u8', value: 'https://x.com/a.m3u8' }))
     const hls = hlsInstances[0]
     const errorHandler = hls.on.mock.calls.find(([evt]: [string]) => evt === 'hlsError')[1]
     errorHandler('hlsError', { fatal: true, details: 'networkError' })
