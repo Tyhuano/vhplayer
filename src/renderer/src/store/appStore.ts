@@ -161,3 +161,29 @@ export function flushPositions(): void {
     }
   }
 }
+
+/**
+ * 周期兜底落盘：把当前播放位置直接写入磁盘（不更新 UI 记忆点）。
+ * 覆盖"进程被强杀、close 事件未触发"的场景（最多丢一个周期内的位置）。
+ */
+export async function persistPositionOnly(): Promise<void> {
+  const state = useAppStore.getState()
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.player-view video'))
+  const playlists = state.playlists.map((p) => ({ ...p, items: p.items.map((it) => ({ ...it })) }))
+  for (const ins of state.instances) {
+    if (ins.playlistId === null) continue
+    const playlist = playlists.find((p) => p.id === ins.playlistId)
+    const item = playlist?.items[ins.currentIndex]
+    const video = videos[ins.id]
+    if (item && video && Number.isFinite(video.currentTime) && video.currentTime > 2) {
+      item.lastPosition = video.currentTime
+    }
+  }
+  const snapshot: StoreSnapshot = {
+    playlists,
+    favorites: state.favorites,
+    settings: state.settings,
+    instances: state.instances
+  }
+  await window.api.store.saveAll(snapshot)
+}

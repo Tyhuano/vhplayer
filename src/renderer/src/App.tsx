@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import PlayerView from './components/PlayerView'
 import { useAppStore } from './store/appStore'
-import { flushPositions, persistNow } from './store/appStore'
+import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
 import { useShortcuts } from './hooks/useShortcuts'
 
 export default function App(): React.JSX.Element {
@@ -12,6 +12,14 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     window.api.store.getAll().then((snapshot) => hydrate(snapshot))
   }, [hydrate])
+
+  useEffect(() => {
+    // 周期兜底：进程被强杀时也能保留最近播放位置（不更新 UI 记忆点）
+    const timer = setInterval(() => {
+      void persistPositionOnly().catch(() => {})
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     return window.api.app.onClosing(() => {
