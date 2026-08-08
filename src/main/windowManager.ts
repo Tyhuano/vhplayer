@@ -101,10 +101,12 @@ export class WindowManager {
 
   /** 仅置顶：只切 alwaysOnTop，绝不触碰 bounds 与形态状态机 */
   setPinned(flag: boolean): void {
-    this.pinned = flag
-    this.safe(() => {
+    try {
       this.win.setAlwaysOnTop(flag)
-    })
+      this.pinned = flag
+    } catch {
+      // 窗口操作失败：保持原状态，不触碰形态状态机
+    }
   }
 
   private safe(action: () => void): void {

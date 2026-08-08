@@ -201,4 +201,26 @@ describe('setPinned（仅置顶，不触碰形态与 bounds）', () => {
     mgr.exitMini()
     expect(fake.alwaysOnTop).toBe(false)
   })
+
+  it('mini 模式中 setPinned 独立生效，退出小窗恢复用户置顶状态', () => {
+    const { fake, mgr } = makeFake()
+    mgr.enterMini()
+    expect(fake.alwaysOnTop).toBe(true)
+    mgr.setPinned(false)
+    expect(fake.alwaysOnTop).toBe(false)
+    mgr.setPinned(true)
+    expect(fake.alwaysOnTop).toBe(true)
+    mgr.exitMini()
+    expect(fake.alwaysOnTop).toBe(true)
+    expect(mgr.getState().pinned).toBe(true)
+  })
+
+  it('mini 中取消置顶后退出小窗保持非置顶', () => {
+    const { fake, mgr } = makeFake()
+    mgr.enterMini()
+    mgr.setPinned(false)
+    mgr.exitMini()
+    expect(fake.alwaysOnTop).toBe(false)
+    expect(mgr.getState().pinned).toBe(false)
+  })
 })
