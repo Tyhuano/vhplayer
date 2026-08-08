@@ -127,14 +127,10 @@ describe('ContextMenu', () => {
     expect(useAppStore.getState().menuOpen).toBe(false)
   })
 
-  it('播放/暂停项操作 video（paused=true 时调用 play）', () => {
+  it('播放/暂停项操作活动格注册的 video（paused=true 时调用 play）', () => {
     const video = document.createElement('video')
     Object.defineProperty(video, 'paused', { configurable: true, get: () => true })
-    video.className = 'player-video'
-    const wrapper = document.createElement('div')
-    wrapper.className = 'player-view'
-    wrapper.appendChild(video)
-    document.body.appendChild(wrapper)
+    useAppStore.setState({ videoRegistry: { 0: video, 1: null, 2: null, 3: null } })
     renderMenu()
     const item = Array.from(container.querySelectorAll('.menu-item')).find(
       (e) => e.textContent?.includes('暂停')
@@ -143,7 +139,6 @@ describe('ContextMenu', () => {
       item.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(video.play).toHaveBeenCalled()
-    wrapper.remove()
   })
 
   it('右/下边缘不足时菜单位置翻转（clamp）', () => {

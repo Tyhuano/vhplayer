@@ -77,7 +77,7 @@ export default function ContextMenu(): React.JSX.Element | null {
   const isFav = item ? state.favorites.items.some((f) => f.id === item.id) : false
 
   const togglePlay = (): void => {
-    const video = document.querySelector('.player-view video') as HTMLVideoElement | null
+    const video = useAppStore.getState().videoRegistry[useAppStore.getState().activeInstance]
     if (!video) return
     if (video.paused) void video.play()
     else video.pause()

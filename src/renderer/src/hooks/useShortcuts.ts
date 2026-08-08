@@ -15,7 +15,7 @@ export function useShortcuts(): void {
       const state = useAppStore.getState()
       const instanceId = state.activeInstance
       const key = event.key
-      const video = document.querySelector('.player-view video') as HTMLVideoElement | null
+      const video = state.videoRegistry[instanceId] ?? null
 
       switch (key) {
         case ' ':
@@ -51,14 +51,17 @@ export function useShortcuts(): void {
           break
         case 'p':
         case 'P':
-          void window.api.window.getState().then((s) => {
-            if (s.mode === 'mini') void window.api.window.exitMini()
-            else void window.api.window.enterMini()
-          })
+          event.preventDefault()
+          void state.toggleMini()
           break
         case 'l':
         case 'L':
           state.togglePanel()
+          break
+        case 'g':
+        case 'G':
+          event.preventDefault()
+          state.toggleGridMode()
           break
         case 'Escape':
           // 优先级链：右键菜单 → 面板 → 退出全屏/置顶

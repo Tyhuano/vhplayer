@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MODE_LABEL, useAppStore } from '../store/appStore'
 import { Icon, type IconName } from './icons'
 
@@ -23,8 +23,8 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
   const favorites = useAppStore((s) => s.favorites)
+  const video = useAppStore((s) => s.videoRegistry[instanceId])
 
-  const videoRef = useRef<HTMLVideoElement | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [muted, setMuted] = useState(false)
@@ -34,12 +34,6 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
   const isFav = currentItem ? favorites.items.some((f) => f.id === currentItem.id) : false
 
   useEffect(() => {
-    const root = document.querySelector('.player-view')
-    videoRef.current = (root?.querySelector('video') as HTMLVideoElement | null) ?? null
-  }, [instanceId])
-
-  useEffect(() => {
-    const video = videoRef.current
     if (!video) return
     const onTime = (): void => setCurrentTime(video.currentTime)
     const onDur = (): void => setDuration(video.duration)
@@ -49,10 +43,9 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
       video.removeEventListener('timeupdate', onTime)
       video.removeEventListener('durationchange', onDur)
     }
-  }, [videoRef.current])
+  }, [video])
 
   const seek = (value: number): void => {
-    const video = videoRef.current
     if (!video) return
     video.currentTime = value
     setCurrentTime(value)
@@ -63,7 +56,6 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
   }
 
   const toggleMuted = (): void => {
-    const video = videoRef.current
     if (!video) return
     setMuted((m) => {
       video.muted = !m
@@ -102,7 +94,6 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
         <button
           title={instance.isPlaying ? '暂停' : '播放'}
           onClick={() => {
-            const video = videoRef.current
             if (!video) return
             if (video.paused) void video.play()
             else video.pause()
