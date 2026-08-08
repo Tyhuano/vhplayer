@@ -95,6 +95,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (ins.playlistId === null) return
     const playlist = get().playlists.find((p) => p.id === ins.playlistId)
     if (!playlist || playlist.items.length === 0) return
+    if (ins.playMode === 'random') {
+      let idx = Math.floor(Math.random() * playlist.items.length)
+      if (idx === ins.currentIndex && playlist.items.length > 1) idx = (idx + 1) % playlist.items.length
+      get().updateInstance(instanceId, { currentIndex: idx, isPlaying: true })
+      return
+    }
     let nextIndex = ins.currentIndex + 1
     if (nextIndex >= playlist.items.length) {
       nextIndex = ins.playMode === 'loop' ? 0 : -1
