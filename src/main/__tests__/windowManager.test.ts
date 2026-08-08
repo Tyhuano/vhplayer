@@ -1,4 +1,23 @@
-import { WindowManager, type WindowLike, type WindowMode } from '../windowManager'
+import { WindowManager, type Rect, type WindowLike, type WindowMode } from '../windowManager'
+
+class FakeWindow implements WindowLike {
+  alwaysOnTop = false
+  private bounds: Rect = { x: 0, y: 0, width: 960, height: 540 }
+
+  setFullScreen(): void {}
+
+  setAlwaysOnTop(flag: boolean): void {
+    this.alwaysOnTop = flag
+  }
+
+  setBounds(bounds: Rect): void {
+    this.bounds = { ...bounds }
+  }
+
+  getBounds(): Rect {
+    return { ...this.bounds }
+  }
+}
 
 function createMockWindow(): {
   mock: WindowLike
@@ -138,5 +157,48 @@ describe('WindowManager', () => {
     wm.toggleFullscreen()
     expect(modeOf(wm)).toBe('window')
     expect(calls.setFullScreen).toEqual([true, false])
+  })
+})
+
+describe('setPinned（仅置顶，不触碰形态与 bounds）', () => {
+  function makeFake(): { fake: FakeWindow; mgr: WindowManager } {
+    const fake = new FakeWindow()
+    const mgr = new WindowManager(fake)
+    return { fake, mgr }
+  }
+
+  it('setPinned(true) 仅调 setAlwaysOnTop，不改变 mode 与 bounds', () => {
+    const { fake, mgr } = makeFake()
+    fake.setBounds({ x: 10, y: 20, width: 800, height: 450 })
+    mgr.setPinned(true)
+    expect(fake.alwaysOnTop).toBe(true)
+    expect(mgr.getState().mode).toBe('window')
+    expect(mgr.getState().bounds).toEqual({ x: 10, y: 20, width: 800, height: 450 })
+    expect(mgr.getState().pinned).toBe(true)
+  })
+
+  it('setPinned(false) 解除置顶', () => {
+    const { fake, mgr } = makeFake()
+    mgr.setPinned(true)
+    mgr.setPinned(false)
+    expect(fake.alwaysOnTop).toBe(false)
+    expect(mgr.getState().pinned).toBe(false)
+  })
+
+  it('置顶状态进入小窗退出后恢复置顶（exitMini 不清除用户置顶）', () => {
+    const { fake, mgr } = makeFake()
+    mgr.setPinned(true)
+    mgr.enterMini()
+    expect(fake.alwaysOnTop).toBe(true)
+    mgr.exitMini()
+    expect(fake.alwaysOnTop).toBe(true)
+    expect(mgr.getState().pinned).toBe(true)
+  })
+
+  it('未置顶时退出小窗回到非置顶（不残留 alwaysOnTop）', () => {
+    const { fake, mgr } = makeFake()
+    mgr.enterMini()
+    mgr.exitMini()
+    expect(fake.alwaysOnTop).toBe(false)
   })
 })

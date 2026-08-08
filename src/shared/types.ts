@@ -53,6 +53,7 @@ export type WindowMode = 'window' | 'fullscreen' | 'mini'
 export interface WindowState {
   mode: WindowMode
   bounds: { x: number; y: number; width: number; height: number }
+  pinned: boolean
 }
 
 export interface StoreSnapshot {
@@ -69,6 +70,7 @@ export const IPC = {
   windowEnterMini: 'window:enter-mini',
   windowExitMini: 'window:exit-mini',
   windowGetState: 'window:get-state',
+  windowSetPinned: 'window:set-pinned',
   windowMoveTo: 'window:move-to',
   windowResizeTo: 'window:resize-to',
   windowMinimize: 'window:minimize',
@@ -92,6 +94,7 @@ export interface IpcApi {
     enterMini(): Promise<void>
     exitMini(): Promise<void>
     getState(): Promise<WindowState>
+    setPinned(flag: boolean): Promise<void>
     moveTo(x: number, y: number): Promise<void>
     resizeTo(x: number, y: number, width: number, height: number): Promise<void>
     minimize(): Promise<void>

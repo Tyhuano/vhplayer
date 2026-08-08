@@ -11,6 +11,7 @@ const api: IpcApi = {
     getState: () => ipcRenderer.invoke(IPC.windowGetState),
     moveTo: (x, y) => ipcRenderer.invoke(IPC.windowMoveTo, x, y),
     resizeTo: (x, y, width, height) => ipcRenderer.invoke(IPC.windowResizeTo, x, y, width, height),
+    setPinned: (flag: boolean) => ipcRenderer.invoke(IPC.windowSetPinned, flag),
     minimize: () => ipcRenderer.invoke(IPC.windowMinimize),
     close: () => ipcRenderer.invoke(IPC.windowClose)
   },

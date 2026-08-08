@@ -31,9 +31,10 @@ Object.defineProperty(window, 'api', {
       toggleFullscreen: jest.fn(),
       enterMini: jest.fn(),
       exitMini: jest.fn(),
-      getState: jest.fn(() => Promise.resolve({ mode: 'window', bounds: { x: 0, y: 0, width: 960, height: 540 } })),
+      getState: jest.fn(() => Promise.resolve({ mode: 'window', bounds: { x: 0, y: 0, width: 960, height: 540 }, pinned: false })),
       moveTo: jest.fn(() => Promise.resolve()),
       resizeTo: jest.fn(() => Promise.resolve()),
+      setPinned: jest.fn(() => Promise.resolve()),
       minimize: jest.fn(() => Promise.resolve()),
       close: jest.fn(() => Promise.resolve())
     },

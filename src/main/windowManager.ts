@@ -17,6 +17,7 @@ export interface WindowLike {
 export interface WindowState {
   mode: WindowMode
   bounds: Rect
+  pinned: boolean
 }
 
 const MINI_WIDTH = 420
@@ -25,13 +26,15 @@ const MINI_MIN_HEIGHT = 280
 export class WindowManager {
   private mode: WindowMode = 'window'
   private windowBounds: Rect | null = null
+  private pinned = false
 
   constructor(private readonly win: WindowLike) {}
 
   getState(): WindowState {
     return {
       mode: this.mode,
-      bounds: this.mode === 'fullscreen' && this.windowBounds ? this.windowBounds : this.win.getBounds()
+      bounds: this.mode === 'fullscreen' && this.windowBounds ? this.windowBounds : this.win.getBounds(),
+      pinned: this.pinned
     }
   }
 
@@ -89,10 +92,18 @@ export class WindowManager {
   exitMini(): void {
     if (this.mode !== 'mini') return
     this.safe(() => {
-      this.win.setAlwaysOnTop(false)
+      this.win.setAlwaysOnTop(this.pinned)
       if (this.windowBounds) this.win.setBounds(this.windowBounds)
       this.windowBounds = null
       this.mode = 'window'
+    })
+  }
+
+  /** 仅置顶：只切 alwaysOnTop，绝不触碰 bounds 与形态状态机 */
+  setPinned(flag: boolean): void {
+    this.pinned = flag
+    this.safe(() => {
+      this.win.setAlwaysOnTop(flag)
     })
   }
 

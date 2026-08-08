@@ -28,6 +28,7 @@ export function registerIpc(win: BrowserWindow): void {
   ipcMain.handle(IPC.windowToggleFullscreen, () => windowManager.toggleFullscreen())
   ipcMain.handle(IPC.windowEnterMini, () => windowManager.enterMini())
   ipcMain.handle(IPC.windowExitMini, () => windowManager.exitMini())
+  ipcMain.handle(IPC.windowSetPinned, (_event, flag: boolean) => windowManager.setPinned(flag))
   ipcMain.handle(IPC.windowGetState, () => windowManager.getState())
   ipcMain.handle(IPC.windowMoveTo, (_event, x: number, y: number) => {
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
