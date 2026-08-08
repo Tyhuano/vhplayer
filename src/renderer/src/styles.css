@@ -98,8 +98,13 @@ body,
   background: #141416;
 }
 
-.player-view.active {
-  box-shadow: inset 0 0 0 2px #ffffff;
+.player-view.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid #ffffff;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .player-video {
