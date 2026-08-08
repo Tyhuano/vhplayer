@@ -2410,7 +2410,14 @@ git status --short
 
 ## 实施变更记录（与实际实现差异）
 
-（实施过程中如对计划有修正，在此追加记录。）
+以下为实施过程中对计划的修正，均已通过测试：
+
+1. **名称排序预期（Task 2）**：`localeCompare(zh-Hans-CN)` 按拼音排序，丙(bǐng) < 甲(jiǎ) < 乙(yǐ)，测试预期改为 `['c','a','b']`。
+2. **toggleFavorite 语义（Task 3）**：计划中"重复收藏去重"（两次 toggle 期望 1）与"再点取消"（两次 toggle 期望 0）自相矛盾；按 spec 3.2 的"收藏/取消收藏"切换语义实现（存在则移除、不存在则添加，天然无重复项），原"去重"用例改为"引用复制（删原列表项不影响收藏）" + "切换往返不产生重复项"。
+3. **测试环境（Task 3）**：`tests/setup.ts` 除 mock `window.api` 外，补充 `IS_REACT_ACT_ENVIRONMENT = true` 消除 React 19 act 环境噪音。
+4. **组件测试模式（Task 5/6）**：`afterEach` 中 `root.unmount()` 与 `container.remove()` 配对（否则上个用例的 root 仍订阅 store，beforeEach 的 setState 触发未包裹 act 的重渲染警告）；`act` 从 `react` 导入（React 19 推荐，替代 react-dom/test-utils 废弃的 act）。
+5. **拖拽源用 ref（Task 6）**：`dragFrom` 由 state 改为 `useRef`——jsdom 测试中 dragstart/drop 在同一 act 内同步触发，state 更新被批处理导致 drop 时读不到源索引；ref 同步读写不依赖渲染时序，真实浏览器场景更稳。
+6. **拖拽排序测试预期（Task 6）**：默认时间倒序下显示顺序 [m1(原0), m3(原2), m2(原1)]，`items()[2]` 是 m2 且原始索引为 1，故拖首项到第三项位置产生 `reorder(0,1)` → `['m2','m1','m3']`（计划原预期 `['m2','m3','m1']` 错误地假设了显示索引=原始索引）。
 
 ---
 
