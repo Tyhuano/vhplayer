@@ -36,9 +36,9 @@ export function uid(): string {
 }
 
 export function mediaItemFromPath(path: string): MediaItem {
-  return { id: uid(), title: titleFromPath(path), sourceType: guessSourceType(path), value: path }
+  return { id: uid(), title: titleFromPath(path), sourceType: guessSourceType(path), value: path, createdAt: Date.now() }
 }
 
 export function mediaItemFromUrl(url: string): MediaItem {
-  return { id: uid(), title: url, sourceType: guessSourceType(url), value: url }
+  return { id: uid(), title: url, sourceType: guessSourceType(url), value: url, createdAt: Date.now() }
 }

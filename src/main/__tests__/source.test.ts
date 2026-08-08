@@ -2,6 +2,8 @@ import {
   extensionOf,
   guessSourceType,
   isFileSource,
+  mediaItemFromPath,
+  mediaItemFromUrl,
   titleFromPath,
   toFileUrl,
   uid
@@ -45,5 +47,14 @@ describe('source 工具', () => {
 
   it('uid 生成唯一值', () => {
     expect(uid()).not.toBe(uid())
+  })
+
+  it('mediaItemFromPath/Url 写入 createdAt', () => {
+    const before = Date.now()
+    const item = mediaItemFromPath('C:\\v\\a.mp4')
+    expect(item.createdAt).toBeDefined()
+    expect(item.createdAt!).toBeGreaterThanOrEqual(before)
+    expect(item.createdAt!).toBeLessThanOrEqual(Date.now())
+    expect(mediaItemFromUrl('https://x.com/v.mp4').createdAt).toBeDefined()
   })
 })

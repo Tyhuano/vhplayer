@@ -7,6 +7,7 @@ export interface MediaItem {
   value: string
   duration?: number
   lastPosition?: number
+  createdAt?: number
 }
 
 export interface Playlist {
