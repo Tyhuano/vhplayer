@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import type { AppState, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot } from '../../../shared/types'
+import type { AppState, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot, WindowMode } from '../../../shared/types'
 import { reorderItems as reorderList, type SortMode } from './playlistUtils'
+import { computeGridBounds } from '../gridLayout'
 
 export const RATES = [0.5, 1, 1.5, 2, 3]
 export const MODES: PlayerInstance['playMode'][] = ['order', 'loop', 'random']
@@ -20,6 +21,14 @@ function emptyInstance(id: number): PlayerInstance {
 }
 
 export interface AppStore extends AppState {
+  /** 各实例已挂载 video 元素引用（纯 UI 状态，不持久化） */
+  videoRegistry: Record<number, HTMLVideoElement | null>
+  /** 各实例视频源尺寸（纯 UI 状态，不持久化；null 表示未知） */
+  videoSizes: Record<number, { w: number; h: number } | null>
+  /** 窗口形态（与主进程 WindowManager 状态机同步） */
+  windowMode: WindowMode
+  /** 是否置顶（仅 alwaysOnTop，不触碰 bounds/形态） */
+  pinned: boolean
   panelOpen: boolean
   panelTab: 'lists' | 'favorites'
   sortMode: Record<string, SortMode>
@@ -30,6 +39,13 @@ export interface AppStore extends AppState {
   hydrate(snapshot: StoreSnapshot): void
   setViewMode(mode: 'single' | 'grid'): void
   setActiveInstance(id: number): void
+  registerVideo(instanceId: number, video: HTMLVideoElement | null): void
+  setVideoSize(instanceId: number, w: number, h: number): void
+  setWindowMode(mode: WindowMode): void
+  syncWindowStateFromMain(): Promise<void>
+  toggleGridMode(): void
+  toggleMini(): Promise<void>
+  togglePinned(): Promise<void>
   updateInstance(id: number, patch: Partial<PlayerInstance>): void
   addPlaylist(playlist: Playlist): void
   createPlaylist(name: string): string
@@ -64,6 +80,10 @@ export interface AppStore extends AppState {
 export const useAppStore = create<AppStore>((set, get) => ({
   viewMode: 'single',
   activeInstance: 0,
+  videoRegistry: { 0: null, 1: null, 2: null, 3: null } as Record<number, HTMLVideoElement | null>,
+  videoSizes: { 0: null, 1: null, 2: null, 3: null } as Record<number, { w: number; h: number } | null>,
+  windowMode: 'window',
+  pinned: false,
   instances: [0, 1, 2, 3].map(emptyInstance),
   playlists: [],
   favorites: { id: 'favorites', name: '收藏', items: [], createdAt: 0 },
@@ -91,6 +111,53 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setViewMode: (mode) => set({ viewMode: mode }),
   setActiveInstance: (id) => set({ activeInstance: id }),
+
+  registerVideo: (instanceId, video) =>
+    set({ videoRegistry: { ...get().videoRegistry, [instanceId]: video } }),
+
+  setVideoSize: (instanceId, w, h) =>
+    set({
+      videoSizes: { ...get().videoSizes, [instanceId]: w > 0 && h > 0 ? { w, h } : null }
+    }),
+
+  setWindowMode: (mode) => set({ windowMode: mode }),
+
+  syncWindowStateFromMain: async () => {
+    const s = await window.api.window.getState()
+    set({ windowMode: s.mode, pinned: s.pinned })
+  },
+
+  toggleGridMode: () => {
+    const state = get()
+    if (state.viewMode === 'grid') {
+      set({ viewMode: 'single' })
+      return
+    }
+    const sizes = [0, 1, 2, 3].map((id) => state.videoSizes[id] ?? null)
+    set({ viewMode: 'grid' })
+    void (async () => {
+      const win = await window.api.window.getState()
+      const bounds = computeGridBounds(sizes, win.bounds)
+      if (bounds) await window.api.window.resizeTo(bounds.x, bounds.y, bounds.width, bounds.height)
+    })()
+  },
+
+  toggleMini: async () => {
+    const state = get()
+    if (state.windowMode === 'mini') {
+      await window.api.window.exitMini()
+      set({ windowMode: 'window' })
+    } else {
+      await window.api.window.enterMini()
+      set({ windowMode: 'mini' })
+    }
+  },
+
+  togglePinned: async () => {
+    const next = !get().pinned
+    await window.api.window.setPinned(next)
+    set({ pinned: next })
+  },
 
   updateInstance: (id, patch) => {
     set({
@@ -277,15 +344,14 @@ export async function persistNow(): Promise<void> {
   await window.api.store.saveAll(snapshot)
 }
 
-/** 关闭前把各实例当前播放位置写入 lastPosition（单实例场景取 .player-view video） */
+/** 关闭前把各实例当前播放位置写入 lastPosition（video 引用取自 store registry） */
 export function flushPositions(): void {
   const state = useAppStore.getState()
-  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.player-view video'))
   for (const ins of state.instances) {
     if (ins.playlistId === null) continue
     const playlist = state.playlists.find((p) => p.id === ins.playlistId)
     const item = playlist?.items[ins.currentIndex]
-    const video = videos[ins.id]
+    const video = state.videoRegistry[ins.id]
     if (item && video && Number.isFinite(video.currentTime) && video.currentTime > 0) {
       useAppStore.getState().updateItemLastPosition(ins.playlistId, item.id, video.currentTime)
     }
@@ -298,13 +364,12 @@ export function flushPositions(): void {
  */
 export async function persistPositionOnly(): Promise<void> {
   const state = useAppStore.getState()
-  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.player-view video'))
   const playlists = state.playlists.map((p) => ({ ...p, items: p.items.map((it) => ({ ...it })) }))
   for (const ins of state.instances) {
     if (ins.playlistId === null) continue
     const playlist = playlists.find((p) => p.id === ins.playlistId)
     const item = playlist?.items[ins.currentIndex]
-    const video = videos[ins.id]
+    const video = state.videoRegistry[ins.id]
     if (item && video && Number.isFinite(video.currentTime) && video.currentTime > 2) {
       item.lastPosition = video.currentTime
     }
