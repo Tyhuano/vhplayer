@@ -54,4 +54,12 @@ describe('useWindowResize', () => {
     document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, screenX: 1500, screenY: 900 }))
     expect(window.api.window.resizeTo).not.toHaveBeenCalled()
   })
+
+  it('鼠标移出窗口（mouseleave）后残留状态被清理，不再调整', async () => {
+    handleEl().dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, screenX: 900, screenY: 500 }))
+    await act(async () => {})
+    document.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }))
+    document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, screenX: 1500, screenY: 900 }))
+    expect(window.api.window.resizeTo).not.toHaveBeenCalled()
+  })
 })

@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, screen } from 'electron'
 import { IPC, type StoreSnapshot } from '../shared/types'
 import { WindowManager } from './windowManager'
 import { DialogService } from './dialogService'
@@ -6,10 +6,18 @@ import { createElectronStoreBackend, StoreService } from './storeService'
 import { scanMediaFolder, mediaItemsFromPaths } from './mediaService'
 
 export function registerIpc(win: BrowserWindow): void {
+  // 期望窗口尺寸：仅由缩放手柄/形态状态机更新。
+  // frameless 窗口 setBounds/setPosition 存在每次 +1px 尺寸漂移（Electron/Windows bug），
+  // moveTo 必须携带固定的期望尺寸（而非 getSize() 的漂移值）以打破放大循环。
+  let expectedSize: [number, number] = [960, 540]
+
   const windowManager = new WindowManager({
     setFullScreen: (flag) => win.setFullScreen(flag),
     setAlwaysOnTop: (flag) => win.setAlwaysOnTop(flag),
-    setBounds: (bounds) => win.setBounds(bounds),
+    setBounds: (bounds) => {
+      expectedSize = [bounds.width, bounds.height]
+      win.setBounds(bounds)
+    },
     getBounds: () => win.getBounds()
   })
   const dialog = new DialogService(win)
@@ -22,15 +30,15 @@ export function registerIpc(win: BrowserWindow): void {
   ipcMain.handle(IPC.windowExitMini, () => windowManager.exitMini())
   ipcMain.handle(IPC.windowGetState, () => windowManager.getState())
   ipcMain.handle(IPC.windowMoveTo, (_event, x: number, y: number) => {
-    win.setPosition(Math.round(x), Math.round(y))
+    win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
   })
   ipcMain.handle(IPC.windowResizeTo, (_event, x: number, y: number, width: number, height: number) => {
-    win.setBounds({
-      x: Math.round(x),
-      y: Math.round(y),
-      width: Math.max(480, Math.round(width)),
-      height: Math.max(320, Math.round(height))
-    })
+    const area = screen.getDisplayMatching(win.getBounds()).workArea
+    expectedSize = [
+      Math.min(Math.max(480, Math.round(width)), Math.round(area.width * 1.5)),
+      Math.min(Math.max(320, Math.round(height)), Math.round(area.height * 1.5))
+    ]
+    win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
   })
   ipcMain.handle(IPC.windowMinimize, () => win.minimize())
   ipcMain.handle(IPC.windowClose, () => win.close())

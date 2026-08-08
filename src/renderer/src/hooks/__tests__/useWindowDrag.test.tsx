@@ -65,4 +65,14 @@ describe('useWindowDrag', () => {
     document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, screenX: 300, screenY: 180 }))
     expect(window.api.window.moveTo).not.toHaveBeenCalled()
   })
+
+  it('鼠标移出窗口（mouseleave）后残留状态被清理，不再跟随', async () => {
+    dragEl().dispatchEvent(
+      new MouseEvent('mousedown', { bubbles: true, button: 0, clientY: 30, screenX: 100, screenY: 80 })
+    )
+    await act(async () => {})
+    document.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }))
+    document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, screenX: 300, screenY: 180 }))
+    expect(window.api.window.moveTo).not.toHaveBeenCalled()
+  })
 })

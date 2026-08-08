@@ -25,12 +25,17 @@ export function useWindowDrag(): { onMouseDown: (e: React.MouseEvent<HTMLElement
     const onBlur = (): void => {
       draggingRef.current = false
     }
+    const onMouseLeave = (): void => {
+      draggingRef.current = false
+    }
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('mouseleave', onMouseLeave)
     window.addEventListener('blur', onBlur)
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener('mouseleave', onMouseLeave)
       window.removeEventListener('blur', onBlur)
     }
   }, [])

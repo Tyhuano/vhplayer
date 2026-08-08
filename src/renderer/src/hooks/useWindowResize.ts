@@ -34,12 +34,18 @@ export function useWindowResize(): { onMouseDown: (e: React.MouseEvent<HTMLEleme
     const onBlur = (): void => {
       resizingRef.current = false
     }
+    const onMouseLeave = (): void => {
+      resizingRef.current = false
+      startRef.current = null
+    }
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('mouseleave', onMouseLeave)
     window.addEventListener('blur', onBlur)
     return () => {
       document.removeEventListener('mousemove', onMouseMove)
       document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener('mouseleave', onMouseLeave)
       window.removeEventListener('blur', onBlur)
     }
   }, [])
