@@ -25,9 +25,9 @@ export function titleFromPath(path: string): string {
 }
 
 export function toFileUrl(path: string): string {
-  if (path.startsWith('file://')) return path
+  if (path.startsWith('vh://')) return path
   const normalized = path.replace(/\\/g, '/')
-  return 'file:///' + normalized
+  return 'vh://local/' + normalized
 }
 
 export function uid(): string {

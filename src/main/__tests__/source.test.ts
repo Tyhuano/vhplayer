@@ -37,10 +37,10 @@ describe('source 工具', () => {
     expect(titleFromPath('D:/x/a.b.c.webm')).toBe('a.b.c')
   })
 
-  it('toFileUrl 转换 Windows 路径并保留 file:// 原样', () => {
-    expect(toFileUrl('C:\\v\\a.mp4')).toBe('file:///C:/v/a.mp4')
-    expect(toFileUrl('D:/x/a.mp4')).toBe('file:///D:/x/a.mp4')
-    expect(toFileUrl('file:///C:/x/a.mp4')).toBe('file:///C:/x/a.mp4')
+  it('toFileUrl 转换 Windows 路径并保留 vh:// 原样', () => {
+    expect(toFileUrl('C:\\v\\a.mp4')).toBe('vh://local/C:/v/a.mp4')
+    expect(toFileUrl('D:/x/a.mp4')).toBe('vh://local/D:/x/a.mp4')
+    expect(toFileUrl('vh://local/C:/x/a.mp4')).toBe('vh://local/C:/x/a.mp4')
   })
 
   it('uid 生成唯一值', () => {

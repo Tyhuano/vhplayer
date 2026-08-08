@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAutoHide } from '../hooks/useAutoHide'
 import { useAppStore } from '../store/appStore'
 
 interface ControlsBarProps {
   instanceId: number
+  visible: boolean
 }
 
 function formatTime(seconds: number): string {
@@ -18,10 +18,9 @@ function formatTime(seconds: number): string {
 
 const MODE_LABEL: Record<string, string> = { order: '顺序', loop: '循环', random: '随机' }
 
-export default function ControlsBar({ instanceId }: ControlsBarProps): React.JSX.Element {
+export default function ControlsBar({ instanceId, visible }: ControlsBarProps): React.JSX.Element {
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
-  const { visible, onMouseMove, onMouseEnter, onMouseLeave } = useAutoHide()
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
@@ -72,12 +71,7 @@ export default function ControlsBar({ instanceId }: ControlsBarProps): React.JSX
   const markPercent = currentItem?.lastPosition && duration > 0 ? (currentItem.lastPosition / duration) * 100 : null
 
   return (
-    <div
-      className={`controls-bar ${visible ? 'visible' : ''}`}
-      onMouseMove={onMouseMove}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
+    <div className={`controls-bar ${visible ? 'visible' : ''}`}>
       <div className="seek-row">
         <div className="seek-track">
           <input

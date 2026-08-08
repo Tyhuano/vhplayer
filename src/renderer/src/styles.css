@@ -197,6 +197,14 @@ body,
   color: rgba(255, 255, 255, 0.9);
 }
 
+.error-detail {
+  max-width: 70%;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  word-break: break-all;
+  text-align: center;
+}
+
 .error-actions {
   display: flex;
   gap: 8px;

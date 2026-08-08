@@ -104,7 +104,7 @@ describe('PlayerCore', () => {
   it('本地文件源直接设置 file:// src，不创建任何引擎', async () => {
     const core = new PlayerCore(video)
     await core.load(makeItem({ sourceType: 'file', value: 'C:\\v\\a.mp4' }))
-    expect(video.src).toBe('file:///C:/v/a.mp4')
+    expect(video.src).toBe('vh://local/C:/v/a.mp4')
     expect(Hls).not.toHaveBeenCalled()
     expect(flvjs.createPlayer).not.toHaveBeenCalled()
     core.destroy()

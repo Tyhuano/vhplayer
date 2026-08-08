@@ -3,6 +3,7 @@ import { useAppStore } from '../store/appStore'
 import { persistNow, schedulePersist } from '../store/appStore'
 import { PlayerCore, type PlayerErrorKind } from '../player/playerCore'
 import { mediaItemFromPath, mediaItemFromUrl } from '../../../shared/source'
+import { useAutoHide } from '../hooks/useAutoHide'
 import ControlsBar from './ControlsBar'
 import UrlInputOverlay from './UrlInputOverlay'
 
@@ -19,6 +20,7 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
   const settings = useAppStore((s) => s.settings)
+  const { visible, onMouseMove, onMouseEnter, onMouseLeave } = useAutoHide()
 
   const playlist = playlists.find((p) => p.id === instance.playlistId) ?? null
   const currentItem = playlist?.items[instance.currentIndex] ?? null
@@ -144,7 +146,7 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   }
 
   return (
-    <div className="player-view">
+    <div className="player-view" onMouseMove={onMouseMove} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <video ref={videoRef} className="player-video" playsInline />
       <div className="player-title">{currentItem?.title ?? 'VHplayer'}</div>
       <div className="player-actions">
@@ -165,17 +167,19 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         </button>
       </div>
       {error && (
-        <div className="error-overlay">
+        <div className="error-overlay" onClick={() => setError(null)}>
           <div className="error-text">
             播放失败（{error.kind === 'unsupported' ? '格式不支持' : error.kind === 'network' ? '网络错误' : '致命错误'}）
           </div>
-          <div className="error-actions">
+          <div className="error-detail">{error.message}</div>
+          <div className="error-actions" onClick={(e) => e.stopPropagation()}>
             <button onClick={retry}>重试</button>
             <button onClick={() => useAppStore.getState().nextInInstance(instanceId)}>下一项</button>
+            <button onClick={() => setError(null)}>关闭</button>
           </div>
         </div>
       )}
-      <ControlsBar instanceId={instanceId} />
+      <ControlsBar instanceId={instanceId} visible={visible} />
       {showUrlInput && <UrlInputOverlay onCancel={() => setShowUrlInput(false)} onConfirm={handleOpenUrl} />}
     </div>
   )
