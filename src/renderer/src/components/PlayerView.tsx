@@ -19,7 +19,6 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
   const settings = useAppStore((s) => s.settings)
-  const urlInputOpen = useAppStore((s) => s.urlInputOpen)
   const active = useAppStore((s) => s.activeInstance === instanceId)
   const viewMode = useAppStore((s) => s.viewMode)
   const pinned = useAppStore((s) => s.pinned)
