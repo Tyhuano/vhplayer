@@ -64,7 +64,7 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const core = coreRef.current
     if (!core || !currentItem) return
     setError(null)
-    lastSaveMsRef.current = 0
+    lastSaveMsRef.current = Date.now()
     lastPosRef.current = 0
     void (async () => {
       await core.load(currentItem)
@@ -89,8 +89,9 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     if (!video) return
     const onMeta = (): void => {
       const skipThreshold = Math.min(3, video.duration * 0.2)
-      if (currentItem.lastPosition && currentItem.lastPosition < video.duration - skipThreshold) {
-        video.currentTime = currentItem.lastPosition
+      const pos = currentItem.lastPosition
+      if (pos && pos >= 2 && pos < video.duration - skipThreshold) {
+        video.currentTime = pos
       }
       video.removeEventListener('loadedmetadata', onMeta)
     }
