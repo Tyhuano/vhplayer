@@ -1,5 +1,10 @@
 import { create } from 'zustand'
 import type { AppState, Playlist, PlayerInstance, Settings, StoreSnapshot } from '../../../shared/types'
+import { reorderItems as reorderList, type SortMode } from './playlistUtils'
+
+export const RATES = [0.5, 1, 1.5, 2, 3]
+export const MODES: PlayerInstance['playMode'][] = ['order', 'loop', 'random']
+export const MODE_LABEL: Record<PlayerInstance['playMode'], string> = { order: '顺序', loop: '循环', random: '随机' }
 
 function emptyInstance(id: number): PlayerInstance {
   return {
@@ -14,21 +19,43 @@ function emptyInstance(id: number): PlayerInstance {
   }
 }
 
-const RATES = [0.5, 1, 1.5, 2, 3]
-const MODES: PlayerInstance['playMode'][] = ['order', 'loop', 'random']
-
 export interface AppStore extends AppState {
+  panelOpen: boolean
+  panelTab: 'lists' | 'favorites'
+  sortMode: Record<string, SortMode>
+  menuOpen: boolean
+  menuX: number
+  menuY: number
+  urlInputOpen: boolean
   hydrate(snapshot: StoreSnapshot): void
   setViewMode(mode: 'single' | 'grid'): void
   setActiveInstance(id: number): void
   updateInstance(id: number, patch: Partial<PlayerInstance>): void
   addPlaylist(playlist: Playlist): void
+  removeFromPlaylist(playlistId: string, itemId: string): void
+  clearPlaylist(playlistId: string): void
   updateItemLastPosition(playlistId: string, itemId: string, position: number): void
   setSettings(patch: Partial<Settings>): void
+  setPlayMode(instanceId: number, mode: PlayerInstance['playMode']): void
+  setRate(instanceId: number, rate: number): void
+  setScaleMode(instanceId: number, mode: 'contain' | 'fill'): void
   cycleRate(instanceId: number): void
   cyclePlayMode(instanceId: number): void
   nextInInstance(instanceId: number): void
   prevInInstance(instanceId: number): void
+  openPanel(): void
+  closePanel(): void
+  togglePanel(): void
+  setPanelTab(tab: 'lists' | 'favorites'): void
+  setSortMode(playlistId: string, mode: SortMode): void
+  toggleFavorite(): void
+  removeFromFavorites(itemId: string): void
+  reorderItems(playlistId: string, from: number, to: number): void
+  playItemFromList(listId: string, index: number): void
+  openMenu(x: number, y: number): void
+  closeMenu(): void
+  openUrlInput(): void
+  closeUrlInput(): void
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -38,11 +65,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
   playlists: [],
   favorites: { id: 'favorites', name: '收藏', items: [], createdAt: 0 },
   settings: { downloadDir: '', autoResume: true },
+  panelOpen: false,
+  panelTab: 'lists',
+  sortMode: {},
+  menuOpen: false,
+  menuX: 0,
+  menuY: 0,
+  urlInputOpen: false,
 
   hydrate: (snapshot) => {
+    const fav =
+      snapshot.favorites && typeof snapshot.favorites === 'object' && Array.isArray(snapshot.favorites.items)
+        ? snapshot.favorites
+        : get().favorites
     set({
       playlists: snapshot.playlists,
-      favorites: snapshot.favorites,
+      favorites: fav,
       settings: snapshot.settings,
       instances: snapshot.instances.length === 4 ? snapshot.instances : get().instances
     })
@@ -63,6 +101,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     schedulePersist()
   },
 
+  removeFromPlaylist: (playlistId, itemId) => {
+    set({
+      playlists: get().playlists.map((p) =>
+        p.id === playlistId ? { ...p, items: p.items.filter((it) => it.id !== itemId) } : p
+      )
+    })
+    schedulePersist()
+  },
+
+  clearPlaylist: (playlistId) => {
+    set({ playlists: get().playlists.map((p) => (p.id === playlistId ? { ...p, items: [] } : p)) })
+    schedulePersist()
+  },
+
   updateItemLastPosition: (playlistId, itemId, position) => {
     set({
       playlists: get().playlists.map((p) =>
@@ -77,6 +129,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ settings: { ...get().settings, ...patch } })
     schedulePersist()
   },
+
+  setPlayMode: (instanceId, mode) => get().updateInstance(instanceId, { playMode: mode }),
+  setRate: (instanceId, rate) => get().updateInstance(instanceId, { rate }),
+  setScaleMode: (instanceId, mode) => get().updateInstance(instanceId, { scaleMode: mode }),
 
   cycleRate: (instanceId) => {
     const ins = get().instances[instanceId]
@@ -119,7 +175,54 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (!playlist || playlist.items.length === 0) return
     const prevIndex = (ins.currentIndex - 1 + playlist.items.length) % playlist.items.length
     get().updateInstance(instanceId, { currentIndex: prevIndex, isPlaying: true })
-  }
+  },
+
+  openPanel: () => set({ panelOpen: true }),
+  closePanel: () => set({ panelOpen: false }),
+  togglePanel: () => set({ panelOpen: !get().panelOpen }),
+  setPanelTab: (tab) => set({ panelTab: tab }),
+  setSortMode: (playlistId, mode) => set({ sortMode: { ...get().sortMode, [playlistId]: mode } }),
+
+  toggleFavorite: () => {
+    const state = get()
+    const ins = state.instances[state.activeInstance]
+    if (ins.playlistId === null) return
+    const list = ins.playlistId === 'favorites' ? state.favorites : state.playlists.find((p) => p.id === ins.playlistId)
+    const item = list?.items[ins.currentIndex]
+    if (!item) return
+    const exists = state.favorites.items.some((f) => f.id === item.id)
+    set({
+      favorites: exists
+        ? { ...state.favorites, items: state.favorites.items.filter((f) => f.id !== item.id) }
+        : { ...state.favorites, items: [...state.favorites.items, { ...item }] }
+    })
+    schedulePersist()
+  },
+
+  removeFromFavorites: (itemId) => {
+    const state = get()
+    set({ favorites: { ...state.favorites, items: state.favorites.items.filter((f) => f.id !== itemId) } })
+    schedulePersist()
+  },
+
+  reorderItems: (playlistId, from, to) => {
+    set({
+      playlists: get().playlists.map((p) => (p.id === playlistId ? { ...p, items: reorderList(p.items, from, to) } : p))
+    })
+    schedulePersist()
+  },
+
+  playItemFromList: (listId, index) => {
+    const state = get()
+    const list = listId === 'favorites' ? state.favorites : state.playlists.find((p) => p.id === listId)
+    if (!list || !list.items[index]) return
+    get().updateInstance(state.activeInstance, { playlistId: listId, currentIndex: index, isPlaying: true })
+  },
+
+  openMenu: (x, y) => set({ menuOpen: true, menuX: x, menuY: y }),
+  closeMenu: () => set({ menuOpen: false }),
+  openUrlInput: () => set({ urlInputOpen: true }),
+  closeUrlInput: () => set({ urlInputOpen: false })
 }))
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null
