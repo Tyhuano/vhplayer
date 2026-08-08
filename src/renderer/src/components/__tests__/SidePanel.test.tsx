@@ -192,7 +192,7 @@ describe('SidePanel', () => {
     expect(useAppStore.getState().panelOpen).toBe(false)
   })
 
-  it('新建列表：输入名称回车创建并选中', () => {
+  it('新建列表：输入名称点 √ 创建并选中', () => {
     renderPanel()
     const createBtn = container.querySelector('.panel-create-btn') as HTMLElement
     act(() => {
@@ -202,12 +202,83 @@ describe('SidePanel', () => {
     expect(input).not.toBeNull()
     act(() => {
       setInputValue(input, '我的片单')
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    const okBtn = container.querySelector('.panel-confirm-ok') as HTMLElement
+    act(() => {
+      okBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     const playlists = useAppStore.getState().playlists
     expect(playlists).toHaveLength(2)
     expect(playlists[1].name).toBe('我的片单')
     expect(playlists[1].items).toHaveLength(0)
+  })
+
+  it('新建列表：点 × 取消不创建', () => {
+    renderPanel()
+    const createBtn = container.querySelector('.panel-create-btn') as HTMLElement
+    act(() => {
+      createBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const input = container.querySelector('.panel-text-input') as HTMLInputElement
+    act(() => {
+      setInputValue(input, '不保存的')
+    })
+    const cancelBtn = container.querySelector('.panel-confirm-cancel') as HTMLElement
+    act(() => {
+      cancelBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(useAppStore.getState().playlists).toHaveLength(1)
+  })
+
+  it('重命名列表：点编辑 → 改名 → √ 保存', () => {
+    renderPanel()
+    const editBtn = container.querySelector('.panel-icon-btn') as HTMLElement
+    act(() => {
+      editBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const input = container.querySelector('.panel-text-input') as HTMLInputElement
+    act(() => {
+      setInputValue(input, '改名后的列表')
+    })
+    const okBtn = container.querySelector('.panel-confirm-ok') as HTMLElement
+    act(() => {
+      okBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(useAppStore.getState().playlists[0].name).toBe('改名后的列表')
+  })
+
+  it('创建新列表后显示「正在播放」按钮，点击回到正在播放的列表', () => {
+    useAppStore.setState({
+      instances: [0, 1, 2, 3].map((id) => ({
+        id,
+        playlistId: id === 0 ? 'p1' : null,
+        currentIndex: 0,
+        playMode: 'order' as const,
+        isPlaying: false,
+        volume: 1,
+        rate: 1,
+        scaleMode: 'contain' as const
+      }))
+    })
+    renderPanel()
+    const createBtn = container.querySelector('.panel-create-btn') as HTMLElement
+    act(() => {
+      createBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const input = container.querySelector('.panel-text-input') as HTMLInputElement
+    act(() => {
+      setInputValue(input, '新列表')
+    })
+    act(() => {
+      const ok = container.querySelector('.panel-confirm-ok') as HTMLElement
+      ok.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const back = container.querySelector('.panel-back-playing') as HTMLElement
+    expect(back).not.toBeNull()
+    act(() => {
+      back.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(container.querySelector('.panel-list-name')?.textContent).toBe('列表一')
   })
 
   it('「添加文件」向当前列表追加引用快照（不覆盖其他列表）', async () => {
@@ -230,7 +301,7 @@ describe('SidePanel', () => {
     expect(p1?.items[3].value).toBe('C:\\add.mp4')
   })
 
-  it('「添加流」输入 URL 回车追加到当前列表', () => {
+  it('「添加流」输入 URL 点 √ 追加到当前列表', () => {
     renderPanel()
     const btn = Array.from(container.querySelectorAll('.panel-add-to-list button')).find(
       (b) => b.textContent === '添加流'
@@ -241,7 +312,10 @@ describe('SidePanel', () => {
     const input = container.querySelector('.panel-text-input') as HTMLInputElement
     act(() => {
       setInputValue(input, 'https://x.com/live.m3u8')
-      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    const okBtn = container.querySelector('.panel-confirm-ok') as HTMLElement
+    act(() => {
+      okBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     const p1 = useAppStore.getState().playlists.find((p) => p.id === 'p1')
     expect(p1?.items).toHaveLength(4)

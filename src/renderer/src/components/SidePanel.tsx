@@ -25,6 +25,29 @@ export default function SidePanel(): React.JSX.Element | null {
   const [newName, setNewName] = useState('')
   const [addingUrl, setAddingUrl] = useState(false)
   const [urlValue, setUrlValue] = useState('')
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+
+  const confirmCreate = (): void => {
+    if (!newName.trim()) return
+    const id = state.createPlaylist(newName)
+    setSelectedListId(id)
+    setCreating(false)
+    setNewName('')
+  }
+
+  const confirmRename = (): void => {
+    state.renamePlaylist(effectiveListId ?? '', renameValue)
+    setRenaming(false)
+    setRenameValue('')
+  }
+
+  const confirmAddUrl = (): void => {
+    if (!urlValue.trim()) return
+    addUrlToPlaylist(effectiveListId ?? '', urlValue)
+    setUrlValue('')
+    setAddingUrl(false)
+  }
 
   if (!panelOpen) return null
 
@@ -73,26 +96,28 @@ export default function SidePanel(): React.JSX.Element | null {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newName.trim()) {
-                        const id = state.createPlaylist(newName)
-                        setSelectedListId(id)
-                        setCreating(false)
-                        setNewName('')
-                      }
+                      if (e.key === 'Enter') confirmCreate()
                       if (e.key === 'Escape') {
                         setCreating(false)
                         setNewName('')
                       }
                     }}
                   />
-                  <button className="panel-create-ok" disabled={!newName.trim()} onClick={() => {
-                    const id = state.createPlaylist(newName)
-                    setSelectedListId(id)
-                    setCreating(false)
-                    setNewName('')
-                  }}>
-                    创建
-                  </button>
+                  <div className="panel-confirm">
+                    <button className="panel-confirm-ok" title="创建" disabled={!newName.trim()} onClick={confirmCreate}>
+                      <Icon name="check" size={14} />
+                    </button>
+                    <button
+                      className="panel-confirm-cancel"
+                      title="取消"
+                      onClick={() => {
+                        setCreating(false)
+                        setNewName('')
+                      }}
+                    >
+                      <Icon name="x" size={14} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button className="panel-create-btn" onClick={() => setCreating(true)}>
@@ -105,6 +130,61 @@ export default function SidePanel(): React.JSX.Element | null {
               <div className="panel-empty">暂无播放列表，点击上方按钮添加</div>
             ) : (
               <>
+                <div className="panel-list-title">
+                  {renaming ? (
+                    <div className="panel-create-input">
+                      <input
+                        autoFocus
+                        className="panel-text-input"
+                        placeholder="列表名称"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmRename()
+                          if (e.key === 'Escape') {
+                            setRenaming(false)
+                            setRenameValue('')
+                          }
+                        }}
+                      />
+                      <div className="panel-confirm">
+                        <button className="panel-confirm-ok" title="保存" disabled={!renameValue.trim()} onClick={confirmRename}>
+                          <Icon name="check" size={14} />
+                        </button>
+                        <button
+                          className="panel-confirm-cancel"
+                          title="取消"
+                          onClick={() => {
+                            setRenaming(false)
+                            setRenameValue('')
+                          }}
+                        >
+                          <Icon name="x" size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="panel-list-name" title={list?.name}>{list?.name}</span>
+                      <button className="panel-icon-btn" title="重命名" onClick={() => {
+                        setRenameValue(list?.name ?? '')
+                        setRenaming(true)
+                      }}>
+                        <Icon name="edit" size={13} />
+                      </button>
+                      {selectedListId !== null && instance.playlistId && (
+                        <button
+                          className="panel-back-playing"
+                          title="回到正在播放的列表"
+                          onClick={() => setSelectedListId(null)}
+                        >
+                          <Icon name="play" size={11} />
+                          正在播放
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
                 <select
                   className="panel-list-select"
                   value={effectiveListId ?? ''}
@@ -112,6 +192,7 @@ export default function SidePanel(): React.JSX.Element | null {
                 >
                   {playlists.map((p) => (
                     <option key={p.id} value={p.id}>
+                      {p.id === instance.playlistId ? '▶ ' : ''}
                       {p.name}
                     </option>
                   ))}
@@ -124,24 +205,37 @@ export default function SidePanel(): React.JSX.Element | null {
                     添加流
                   </button>
                   {addingUrl && (
-                    <input
-                      autoFocus
-                      className="panel-text-input"
-                      placeholder="https://example.com/live.m3u8"
-                      value={urlValue}
-                      onChange={(e) => setUrlValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && urlValue.trim()) {
-                          addUrlToPlaylist(effectiveListId ?? '', urlValue)
-                          setUrlValue('')
-                          setAddingUrl(false)
-                        }
-                        if (e.key === 'Escape') {
-                          setAddingUrl(false)
-                          setUrlValue('')
-                        }
-                      }}
-                    />
+                    <div className="panel-create-input">
+                      <input
+                        autoFocus
+                        className="panel-text-input"
+                        placeholder="https://example.com/live.m3u8"
+                        value={urlValue}
+                        onChange={(e) => setUrlValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmAddUrl()
+                          if (e.key === 'Escape') {
+                            setAddingUrl(false)
+                            setUrlValue('')
+                          }
+                        }}
+                      />
+                      <div className="panel-confirm">
+                        <button className="panel-confirm-ok" title="添加" disabled={!urlValue.trim()} onClick={confirmAddUrl}>
+                          <Icon name="check" size={14} />
+                        </button>
+                        <button
+                          className="panel-confirm-cancel"
+                          title="取消"
+                          onClick={() => {
+                            setAddingUrl(false)
+                            setUrlValue('')
+                          }}
+                        >
+                          <Icon name="x" size={14} />
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="panel-sort-actions">

@@ -17,7 +17,9 @@ export async function openFolder(instanceId: number): Promise<void> {
   if (!folder) return
   const items = await window.api.media.scanFolder(folder)
   if (items.length === 0) return
-  const playlist: Playlist = { id: crypto.randomUUID(), name: items[0].title, items, createdAt: Date.now() }
+  // 列表名默认取文件夹名（可后续重命名）
+  const folderName = folder.split(/[\\/]/).filter(Boolean).pop() ?? items[0].title
+  const playlist: Playlist = { id: crypto.randomUUID(), name: folderName, items, createdAt: Date.now() }
   useAppStore.getState().addPlaylist(playlist)
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
 }

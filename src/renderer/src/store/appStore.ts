@@ -34,6 +34,7 @@ export interface AppStore extends AppState {
   addPlaylist(playlist: Playlist): void
   createPlaylist(name: string): string
   addItemsToPlaylist(playlistId: string, items: MediaItem[]): void
+  renamePlaylist(playlistId: string, name: string): void
   removeFromPlaylist(playlistId: string, itemId: string): void
   clearPlaylist(playlistId: string): void
   updateItemLastPosition(playlistId: string, itemId: string, position: number): void
@@ -117,6 +118,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
         p.id === playlistId ? { ...p, items: [...p.items, ...items] } : p
       )
     })
+    schedulePersist()
+  },
+
+  renamePlaylist: (playlistId, name) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    set({ playlists: get().playlists.map((p) => (p.id === playlistId ? { ...p, name: trimmed } : p)) })
     schedulePersist()
   },
 

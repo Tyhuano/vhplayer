@@ -163,4 +163,11 @@ describe('appStore actions', () => {
     ])
     expect(useAppStore.getState().playlists.find((p) => p.id === id)?.items).toHaveLength(2)
   })
+
+  it('renamePlaylist 重命名列表', () => {
+    useAppStore.getState().renamePlaylist('p1', '新名字')
+    expect(useAppStore.getState().playlists[0].name).toBe('新名字')
+    useAppStore.getState().renamePlaylist('p1', '   ')
+    expect(useAppStore.getState().playlists[0].name).toBe('新名字')
+  })
 })
