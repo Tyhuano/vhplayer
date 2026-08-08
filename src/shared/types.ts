@@ -66,6 +66,7 @@ export const IPC = {
   windowExitMini: 'window:exit-mini',
   windowGetState: 'window:get-state',
   windowMoveTo: 'window:move-to',
+  windowResizeTo: 'window:resize-to',
   windowMinimize: 'window:minimize',
   windowClose: 'window:close',
   dialogOpenFolder: 'dialog:open-folder',
@@ -74,6 +75,7 @@ export const IPC = {
   storeGetAll: 'store:get-all',
   storeSaveAll: 'store:save-all',
   mediaScanFolder: 'media:scan-folder',
+  mediaFromPaths: 'media:from-paths',
   appClosing: 'app:closing',
   appReadyToClose: 'app:ready-to-close'
 } as const
@@ -87,6 +89,7 @@ export interface IpcApi {
     exitMini(): Promise<void>
     getState(): Promise<WindowState>
     moveTo(x: number, y: number): Promise<void>
+    resizeTo(x: number, y: number, width: number, height: number): Promise<void>
     minimize(): Promise<void>
     close(): Promise<void>
   }
@@ -101,6 +104,7 @@ export interface IpcApi {
   }
   media: {
     scanFolder(folder: string): Promise<MediaItem[]>
+    fromPaths(paths: string[]): Promise<MediaItem[]>
   }
   app: {
     onClosing(callback: () => void): () => void

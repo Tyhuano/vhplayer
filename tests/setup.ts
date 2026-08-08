@@ -33,12 +33,13 @@ Object.defineProperty(window, 'api', {
       exitMini: jest.fn(),
       getState: jest.fn(() => Promise.resolve({ mode: 'window', bounds: { x: 0, y: 0, width: 960, height: 540 } })),
       moveTo: jest.fn(() => Promise.resolve()),
+      resizeTo: jest.fn(() => Promise.resolve()),
       minimize: jest.fn(() => Promise.resolve()),
       close: jest.fn(() => Promise.resolve())
     },
     dialog: { openFolder: jest.fn(), openFile: jest.fn(), save: jest.fn() },
     store: { getAll: jest.fn(), saveAll: jest.fn(() => Promise.resolve()) },
-    media: { scanFolder: jest.fn(() => Promise.resolve([])) },
+    media: { scanFolder: jest.fn(() => Promise.resolve([])), fromPaths: jest.fn(() => Promise.resolve([])) },
     app: { onClosing: jest.fn(() => () => {}), readyToClose: jest.fn(() => Promise.resolve()) }
   }
 })

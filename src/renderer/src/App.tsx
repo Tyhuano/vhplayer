@@ -7,12 +7,14 @@ import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
 import { useShortcuts } from './hooks/useShortcuts'
 import { useWindowDrag } from './hooks/useWindowDrag'
+import { useWindowResize } from './hooks/useWindowResize'
 
 export default function App(): React.JSX.Element {
   const activeInstance = useAppStore((s) => s.activeInstance)
   const hydrate = useAppStore((s) => s.hydrate)
   useShortcuts()
   const { onMouseDown } = useWindowDrag()
+  const { onMouseDown: onResizeStart } = useWindowResize()
 
   useEffect(() => {
     window.api.store.getAll().then((snapshot) => hydrate(snapshot))
@@ -46,6 +48,7 @@ export default function App(): React.JSX.Element {
         </div>
       </div>
       <PlayerView instanceId={activeInstance} />
+      <div className="resize-handle" onMouseDown={onResizeStart} title="调整窗口大小" />
       <SidePanel />
       <ContextMenu />
     </div>

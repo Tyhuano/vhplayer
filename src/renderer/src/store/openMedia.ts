@@ -1,11 +1,12 @@
-import { mediaItemFromPath, mediaItemFromUrl } from '../../../shared/source'
+import { mediaItemFromUrl } from '../../../shared/source'
 import type { Playlist } from '../../../shared/types'
 import { useAppStore } from './appStore'
 
 export async function openFiles(instanceId: number): Promise<void> {
   const paths = await window.api.dialog.openFile()
   if (!paths || paths.length === 0) return
-  const items = paths.map(mediaItemFromPath)
+  const items = await window.api.media.fromPaths(paths)
+  if (items.length === 0) return
   const playlist: Playlist = { id: crypto.randomUUID(), name: items[0].title, items, createdAt: Date.now() }
   useAppStore.getState().addPlaylist(playlist)
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })

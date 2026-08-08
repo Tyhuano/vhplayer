@@ -157,9 +157,13 @@ describe('SidePanel', () => {
     expect(useAppStore.getState().favorites.items).toHaveLength(0)
   })
 
-  it('「打开文件」按钮复用共享逻辑（dialog mock 返回路径）', async () => {
+  it('「打开文件」按钮复用共享逻辑（dialog + fromPaths mock）', async () => {
     const openFileMock = window.api.dialog.openFile as jest.Mock
     openFileMock.mockResolvedValue(['C:\\x\\movie.mp4'])
+    const fromPathsMock = window.api.media.fromPaths as jest.Mock
+    fromPathsMock.mockResolvedValue([
+      { id: 'x1', title: 'movie', sourceType: 'file', value: 'C:\\x\\movie.mp4', createdAt: 100 }
+    ])
     renderPanel()
     const btn = Array.from(container.querySelectorAll('.panel-add-actions button')).find(
       (b) => b.textContent === '打开文件'

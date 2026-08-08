@@ -56,7 +56,7 @@ function createWindow(): BrowserWindow {
     minWidth: 480,
     minHeight: 320,
     frame: false,
-    resizable: true,
+    resizable: false,
     backgroundColor: '#000000',
     show: false,
     webPreferences: {

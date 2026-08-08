@@ -3,7 +3,7 @@ import { IPC, type StoreSnapshot } from '../shared/types'
 import { WindowManager } from './windowManager'
 import { DialogService } from './dialogService'
 import { createElectronStoreBackend, StoreService } from './storeService'
-import { scanMediaFolder } from './mediaService'
+import { scanMediaFolder, mediaItemsFromPaths } from './mediaService'
 
 export function registerIpc(win: BrowserWindow): void {
   const windowManager = new WindowManager({
@@ -24,6 +24,14 @@ export function registerIpc(win: BrowserWindow): void {
   ipcMain.handle(IPC.windowMoveTo, (_event, x: number, y: number) => {
     win.setPosition(Math.round(x), Math.round(y))
   })
+  ipcMain.handle(IPC.windowResizeTo, (_event, x: number, y: number, width: number, height: number) => {
+    win.setBounds({
+      x: Math.round(x),
+      y: Math.round(y),
+      width: Math.max(480, Math.round(width)),
+      height: Math.max(320, Math.round(height))
+    })
+  })
   ipcMain.handle(IPC.windowMinimize, () => win.minimize())
   ipcMain.handle(IPC.windowClose, () => win.close())
 
@@ -36,6 +44,7 @@ export function registerIpc(win: BrowserWindow): void {
     store.saveAll(snapshot)
   })
   ipcMain.handle(IPC.mediaScanFolder, (_event, folder: string) => scanMediaFolder(folder))
+  ipcMain.handle(IPC.mediaFromPaths, (_event, paths: string[]) => mediaItemsFromPaths(paths))
   ipcMain.handle(IPC.appReadyToClose, () => {
     if (!win.isDestroyed()) win.destroy()
   })

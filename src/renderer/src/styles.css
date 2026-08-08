@@ -57,6 +57,31 @@ body,
   color: #ffffff;
 }
 
+.resize-handle {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  z-index: 25;
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.resize-handle:hover::after {
+  border-color: #fe2c55;
+}
+
 .player-view {
   position: relative;
   height: 100%;

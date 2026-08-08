@@ -10,6 +10,7 @@ const api: IpcApi = {
     exitMini: () => ipcRenderer.invoke(IPC.windowExitMini),
     getState: () => ipcRenderer.invoke(IPC.windowGetState),
     moveTo: (x, y) => ipcRenderer.invoke(IPC.windowMoveTo, x, y),
+    resizeTo: (x, y, width, height) => ipcRenderer.invoke(IPC.windowResizeTo, x, y, width, height),
     minimize: () => ipcRenderer.invoke(IPC.windowMinimize),
     close: () => ipcRenderer.invoke(IPC.windowClose)
   },
@@ -23,7 +24,8 @@ const api: IpcApi = {
     saveAll: (snapshot: StoreSnapshot) => ipcRenderer.invoke(IPC.storeSaveAll, snapshot)
   },
   media: {
-    scanFolder: (folder: string) => ipcRenderer.invoke(IPC.mediaScanFolder, folder)
+    scanFolder: (folder: string) => ipcRenderer.invoke(IPC.mediaScanFolder, folder),
+    fromPaths: (paths: string[]) => ipcRenderer.invoke(IPC.mediaFromPaths, paths)
   },
   app: {
     onClosing: (callback: () => void) => {
