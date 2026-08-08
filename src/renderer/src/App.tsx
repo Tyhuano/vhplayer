@@ -2,15 +2,20 @@ import { useEffect } from 'react'
 import PlayerView from './components/PlayerView'
 import SidePanel from './components/SidePanel'
 import ContextMenu from './components/ContextMenu'
+import UrlInputOverlay from './components/UrlInputOverlay'
 import { Icon } from './components/icons'
 import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
+import { openUrl } from './store/openMedia'
 import { useShortcuts } from './hooks/useShortcuts'
 import { useWindowDrag } from './hooks/useWindowDrag'
 import { useWindowResize } from './hooks/useWindowResize'
 
 export default function App(): React.JSX.Element {
   const activeInstance = useAppStore((s) => s.activeInstance)
+  const viewMode = useAppStore((s) => s.viewMode)
+  const windowMode = useAppStore((s) => s.windowMode)
+  const urlInputOpen = useAppStore((s) => s.urlInputOpen)
   const hydrate = useAppStore((s) => s.hydrate)
   useShortcuts()
   const { onMouseDown } = useWindowDrag()
@@ -18,6 +23,7 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     window.api.store.getAll().then((snapshot) => hydrate(snapshot))
+    void useAppStore.getState().syncWindowStateFromMain().catch(() => {})
   }, [hydrate])
 
   useEffect(() => {
@@ -35,6 +41,8 @@ export default function App(): React.JSX.Element {
     })
   }, [])
 
+  const isGrid = viewMode === 'grid' && windowMode !== 'mini'
+
   return (
     <div className="app">
       <div className="app-titlebar" onMouseDown={onMouseDown}>
@@ -47,10 +55,24 @@ export default function App(): React.JSX.Element {
           </button>
         </div>
       </div>
-      <PlayerView instanceId={activeInstance} />
+      {isGrid ? (
+        <div className="player-grid">
+          {[0, 1, 2, 3].map((id) => (
+            <PlayerView key={id} instanceId={id} />
+          ))}
+        </div>
+      ) : (
+        <PlayerView instanceId={activeInstance} />
+      )}
       <div className="resize-handle" onMouseDown={onResizeStart} title="调整窗口大小" />
       <SidePanel />
       <ContextMenu />
+      {urlInputOpen && (
+        <UrlInputOverlay
+          onCancel={() => useAppStore.getState().closeUrlInput()}
+          onConfirm={(url) => openUrl(activeInstance, url)}
+        />
+      )}
     </div>
   )
 }
