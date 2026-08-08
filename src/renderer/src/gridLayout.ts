@@ -17,13 +17,15 @@ export interface ScreenLimit {
 
 const MIN_W = 480
 const MIN_H = 320
+/** 分屏最小舒适宽度：每格至少 480 宽，2 列共 960 */
+const MIN_GRID_W = 960
 
 /**
  * 计算进入分屏后的窗口 bounds：
  * - 取 4 槽位中有效视频尺寸的宽高比平均值（规格：取平均，无有效值则不动窗口）
- * - 面积守恒：以当前窗口面积为基准，按平均宽高比换算宽高（宽 = sqrt(S·R)、高 = sqrt(S/R)），
- *   观感大小不变，且竖屏视频得到竖窗口而非巨高横窗
- * - 2x2 网格中每格宽高比 = 窗口宽高比，contain 下无额外黑边
+ * - 宽度 = max(当前窗口宽, 960)：小窗口进入分屏时放大保证每格 ≥480 可完整显示；
+ *   大窗口保持用户宽度心智
+ * - 高度 = 宽 / 平均宽高比（2x2 网格中每格宽高比 = 窗口宽高比，contain 下无额外黑边）
  * - screen 提供时钳制到工作区 95%（先高后宽，保持比例），避免极端比例高度爆屏
  * - 下限 480x320 与主进程 resizeTo 钳制一致
  * - 返回 null 表示保持当前窗口
@@ -36,9 +38,8 @@ export function computeGridBounds(
   const valid = sizes.filter((s): s is VideoSize => !!s && s.w > 0 && s.h > 0)
   if (valid.length === 0) return null
   const avgRatio = valid.reduce((sum, s) => sum + s.w / s.h, 0) / valid.length
-  const area = current.width * current.height
-  let width = Math.max(1, Math.round(Math.sqrt(area * avgRatio)))
-  let height = Math.max(1, Math.round(Math.sqrt(area / avgRatio)))
+  let width = Math.max(current.width, MIN_GRID_W)
+  let height = Math.max(1, Math.round(width / avgRatio))
   if (screen && screen.w > 0 && screen.h > 0) {
     const maxW = Math.round(screen.w * 0.95)
     const maxH = Math.round(screen.h * 0.95)

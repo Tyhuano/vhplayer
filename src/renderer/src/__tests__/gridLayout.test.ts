@@ -9,8 +9,7 @@ describe('computeGridBounds', () => {
     expect(computeGridBounds([{ w: 0, h: 0 }, null, { w: -1, h: 2 }, null], cur)).toBeNull()
   })
 
-  it('16:9 视频 + 16:9 窗口（面积守恒）→ 宽高不变', () => {
-    // S = 960×540，R = 16/9 → W = sqrt(518400×16/9) = 960，H = 540
+  it('16:9 视频 + 16:9 窗口 → 宽高不变', () => {
     expect(computeGridBounds([{ w: 1920, h: 1080 }, null, null, null], cur)).toEqual({
       x: 100,
       y: 50,
@@ -19,19 +18,31 @@ describe('computeGridBounds', () => {
     })
   })
 
-  it('4:3 视频 → 面积守恒换算为 4:3 窗口（831×623）', () => {
-    // S = 518400，R = 4/3 → W = sqrt(518400×4/3) = 831.4 → 831，H = sqrt(518400×3/4) = 623.5 → 624？
-    // 精确计算：sqrt(691200) = 831.38 → 831；sqrt(388800) = 623.54 → 624
-    const r = computeGridBounds([{ w: 640, h: 480 }, null, null, null], cur)
-    expect(r?.width).toBe(831)
-    expect(r?.height).toBe(624)
+  it('4:3 视频 → 宽保持 960，高 = 960/4:3 = 720（每格 480×360 完整显示）', () => {
+    expect(computeGridBounds([{ w: 640, h: 480 }, null, null, null], cur)).toEqual({
+      x: 100,
+      y: 50,
+      width: 960,
+      height: 720
+    })
+  })
+
+  it('小窗口（500 宽）进入分屏 → 放大到 960 宽保证每格 ≥480', () => {
+    const small = { x: 0, y: 0, width: 500, height: 380 }
+    const r = computeGridBounds([{ w: 1920, h: 1080 }, null, null, null], small)
+    expect(r).toEqual({ x: 0, y: 0, width: 960, height: 540 })
+  })
+
+  it('大窗口保持当前宽度', () => {
+    const big = { x: 0, y: 0, width: 1600, height: 900 }
+    const r = computeGridBounds([{ w: 1920, h: 1080 }, null, null, null], big)
+    expect(r).toEqual({ x: 0, y: 0, width: 1600, height: 900 })
   })
 
   it('多个尺寸取宽高比平均值', () => {
-    // R = (16/9 + 4/3)/2 = 1.5555…，S = 518400
-    // W = sqrt(518400×1.5555…) = 898.1 → 898，H = sqrt(518400/1.5555…) = 577.3 → 577
+    // R = (16/9 + 4/3)/2 = 1.5555…，宽 960 → 高 = round(960/1.5555…) = 617
     const r = computeGridBounds([{ w: 1920, h: 1080 }, { w: 640, h: 480 }, null, null], cur)
-    expect(r).toEqual({ x: 100, y: 50, width: 898, height: 577 })
+    expect(r).toEqual({ x: 100, y: 50, width: 960, height: 617 })
   })
 
   it('位置保持当前窗口', () => {
@@ -40,23 +51,19 @@ describe('computeGridBounds', () => {
     expect(r?.y).toBe(20)
   })
 
-  it('竖屏 9:16 视频 → 竖窗口，高度钳制到工作区 95%、宽度保下限 480', () => {
-    // 面积守恒：W = sqrt(518400×9/16) = 540，H = sqrt(518400×16/9) = 960
-    // 钳制：maxH = 820.8 → 821；W = 821×9/16 = 461.8 → 462 → 下限 480
+  it('竖屏 9:16 视频 → 高度钳制到工作区 95%、宽度随之回缩并保下限 480', () => {
+    // 宽 960 → 高 = 960/0.5625 = 1706 → 钳 maxH = 821 → W = 821×9/16 = 461.8 → 462 → 下限 480
     const r = computeGridBounds([{ w: 1080, h: 1920 }, null, null, null], cur, screen)
     expect(r).toEqual({ x: 100, y: 50, width: 480, height: 821 })
   })
 
-  it('宽高双超限 → 高度优先钳制后宽度随之（仍可能超宽则二次钳制）', () => {
-    // 极宽视频 21:9：R = 2.333，W = sqrt(518400×2.333) = 1100，H = sqrt(518400/2.333) = 471
-    // maxW = 1459.2 → 1459、maxH = 820.8 → 821：都未超，无需钳制
+  it('极宽 21:9 视频不超屏幕宽度', () => {
+    // R = 21/9 = 2.333…，宽 960 → 高 = 411；maxW = 1459、maxH = 821：均未超
     const r = computeGridBounds([{ w: 3360, h: 1440 }, null, null, null], cur, screen)
-    expect(r?.width).toBe(1100)
-    expect(r?.height).toBe(471)
+    expect(r).toEqual({ x: 100, y: 50, width: 960, height: 411 })
   })
 
   it('screen 钳制下限 480x320', () => {
-    // 极小面积窗口 + 极端比例仍不低于下限
     const tiny = { x: 0, y: 0, width: 480, height: 320 }
     const r = computeGridBounds([{ w: 1080, h: 1920 }, null, null, null], tiny, screen)
     expect(r?.width).toBeGreaterThanOrEqual(480)
