@@ -1,8 +1,9 @@
 /** @type {import('jest').Config} */
 module.exports = {
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts'],
+  setupFiles: ['<rootDir>/tests/setup.ts'],
   transform: {
     '^.+\\.ts$': [
       'ts-jest',
@@ -13,7 +14,7 @@ module.exports = {
           esModuleInterop: true,
           strict: true,
           target: 'ES2022',
-          lib: ['ES2022'],
+          lib: ['ES2022', 'DOM', 'DOM.Iterable'],
           types: ['node', 'jest'],
           skipLibCheck: true
         }
