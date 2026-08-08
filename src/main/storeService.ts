@@ -39,6 +39,13 @@ export function createElectronStoreBackend(): StoreBackend {
 
 const DEFAULT_SETTINGS: Settings = { downloadDir: '', autoResume: true }
 
+export interface StoreSnapshot {
+  playlists: Playlist[]
+  favorites: Playlist
+  settings: Settings
+  instances: PlayerInstance[]
+}
+
 function defaultInstances(): PlayerInstance[] {
   return [0, 1, 2, 3].map(
     (id): PlayerInstance => ({
@@ -97,5 +104,21 @@ export class StoreService {
 
   saveInstances(instances: PlayerInstance[]): void {
     this.backend.set('instances', instances)
+  }
+
+  getAll(): StoreSnapshot {
+    return {
+      playlists: this.getPlaylists(),
+      favorites: this.getFavorites(),
+      settings: this.getSettings(),
+      instances: this.getInstances()
+    }
+  }
+
+  saveAll(snapshot: StoreSnapshot): void {
+    this.savePlaylists(snapshot.playlists)
+    this.saveFavorites(snapshot.favorites)
+    this.saveSettings(snapshot.settings)
+    this.saveInstances(snapshot.instances)
   }
 }

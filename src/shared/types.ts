@@ -50,6 +50,13 @@ export interface WindowState {
   bounds: { x: number; y: number; width: number; height: number }
 }
 
+export interface StoreSnapshot {
+  playlists: Playlist[]
+  favorites: Playlist
+  settings: Settings
+  instances: PlayerInstance[]
+}
+
 export const IPC = {
   windowEnterFullscreen: 'window:enter-fullscreen',
   windowExitFullscreen: 'window:exit-fullscreen',
@@ -59,7 +66,12 @@ export const IPC = {
   windowGetState: 'window:get-state',
   dialogOpenFolder: 'dialog:open-folder',
   dialogOpenFile: 'dialog:open-file',
-  dialogSave: 'dialog:save'
+  dialogSave: 'dialog:save',
+  storeGetAll: 'store:get-all',
+  storeSaveAll: 'store:save-all',
+  mediaScanFolder: 'media:scan-folder',
+  appClosing: 'app:closing',
+  appReadyToClose: 'app:ready-to-close'
 } as const
 
 export interface IpcApi {
@@ -75,5 +87,16 @@ export interface IpcApi {
     openFolder(): Promise<string | null>
     openFile(): Promise<string[] | null>
     save(defaultName: string): Promise<string | null>
+  }
+  store: {
+    getAll(): Promise<StoreSnapshot>
+    saveAll(snapshot: StoreSnapshot): Promise<void>
+  }
+  media: {
+    scanFolder(folder: string): Promise<MediaItem[]>
+  }
+  app: {
+    onClosing(callback: () => void): () => void
+    readyToClose(): Promise<void>
   }
 }

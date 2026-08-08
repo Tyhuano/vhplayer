@@ -2,9 +2,17 @@ import { PlayerCore } from '../playerCore'
 import type { MediaItem } from '../../../../shared/types'
 
 jest.mock('hls.js', () => {
-  const instances: Array<Record<string, jest.Mock>> = []
+  interface HlsInstanceMock {
+    attachMedia: jest.Mock
+    loadSource: jest.Mock
+    destroy: jest.Mock
+    on: jest.Mock
+    off: jest.Mock
+    config: Record<string, unknown>
+  }
+  const instances: HlsInstanceMock[] = []
   const HlsMock = jest.fn().mockImplementation(() => {
-    const inst = {
+    const inst: HlsInstanceMock = {
       attachMedia: jest.fn(),
       loadSource: jest.fn(),
       destroy: jest.fn(),
@@ -14,7 +22,11 @@ jest.mock('hls.js', () => {
     }
     instances.push(inst)
     return inst
-  })
+  }) as unknown as jest.Mock & {
+    isSupported: jest.Mock
+    Events: { ERROR: string }
+    __instances: HlsInstanceMock[]
+  }
   HlsMock.isSupported = jest.fn(() => true)
   HlsMock.Events = { ERROR: 'hlsError' }
   HlsMock.__instances = instances
@@ -39,7 +51,7 @@ jest.mock('flv.js', () => ({
 import Hls from 'hls.js'
 import flvjs from 'flv.js'
 
-type HlsMockType = typeof Hls & { __instances: Array<Record<string, jest.Mock>> }
+type HlsMockType = typeof Hls & { __instances: Array<{ attachMedia: jest.Mock; loadSource: jest.Mock; destroy: jest.Mock; on: jest.Mock; off: jest.Mock; config: Record<string, unknown> }> }
 const hlsInstances = (Hls as unknown as HlsMockType).__instances
 
 function makeItem(partial: Partial<MediaItem> = {}): MediaItem {

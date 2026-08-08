@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
 import { registerIpc } from './ipc'
+import { IPC } from '../shared/types'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -21,6 +22,15 @@ function createWindow(): BrowserWindow {
   })
 
   win.once('ready-to-show', () => win.show())
+
+  // 关闭前通知渲染进程持久化，1.5s 超时兜底
+  win.on('close', (event) => {
+    event.preventDefault()
+    win.webContents.send(IPC.appClosing)
+    setTimeout(() => {
+      if (!win.isDestroyed()) win.destroy()
+    }, 1500)
+  })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)

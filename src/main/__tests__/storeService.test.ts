@@ -71,4 +71,18 @@ describe('StoreService', () => {
     service.savePlaylists([{ id: 'b', name: 'B', items: [], createdAt: 2 }])
     expect(service.getPlaylists()).toEqual([{ id: 'b', name: 'B', items: [], createdAt: 2 }])
   })
+
+  it('saveAll/getAll 快照 round-trip', () => {
+    const { service } = createService()
+    const snapshot = {
+      playlists: [
+        { id: 'p1', name: '列表', items: [{ id: 'm1', title: '一', sourceType: 'file' as const, value: 'C:\\a.mp4' }], createdAt: 1 }
+      ],
+      favorites: { id: 'favorites', name: '收藏', items: [{ id: 'f1', title: '爱', sourceType: 'url' as const, value: 'https://x.com/v.mp4' }], createdAt: 2 },
+      settings: { downloadDir: 'D:/d', autoResume: false },
+      instances: [0, 1, 2, 3].map((id) => ({ id, playlistId: null, currentIndex: 0, playMode: 'order' as const, isPlaying: false, volume: 1, rate: 1, scaleMode: 'contain' as const }))
+    }
+    service.saveAll(snapshot)
+    expect(service.getAll()).toEqual(snapshot)
+  })
 })

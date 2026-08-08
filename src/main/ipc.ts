@@ -1,7 +1,9 @@
 import { BrowserWindow, ipcMain } from 'electron'
-import { IPC } from '../shared/types'
+import { IPC, type StoreSnapshot } from '../shared/types'
 import { WindowManager } from './windowManager'
 import { DialogService } from './dialogService'
+import { createElectronStoreBackend, StoreService } from './storeService'
+import { scanMediaFolder } from './mediaService'
 
 export function registerIpc(win: BrowserWindow): void {
   const windowManager = new WindowManager({
@@ -11,6 +13,7 @@ export function registerIpc(win: BrowserWindow): void {
     getBounds: () => win.getBounds()
   })
   const dialog = new DialogService(win)
+  const store = new StoreService(createElectronStoreBackend())
 
   ipcMain.handle(IPC.windowEnterFullscreen, () => windowManager.enterFullscreen())
   ipcMain.handle(IPC.windowExitFullscreen, () => windowManager.exitFullscreen())
@@ -22,4 +25,13 @@ export function registerIpc(win: BrowserWindow): void {
   ipcMain.handle(IPC.dialogOpenFolder, () => dialog.openFolder())
   ipcMain.handle(IPC.dialogOpenFile, () => dialog.openFile())
   ipcMain.handle(IPC.dialogSave, (_event, defaultName: string) => dialog.save(defaultName))
+
+  ipcMain.handle(IPC.storeGetAll, () => store.getAll())
+  ipcMain.handle(IPC.storeSaveAll, (_event, snapshot: StoreSnapshot) => {
+    store.saveAll(snapshot)
+  })
+  ipcMain.handle(IPC.mediaScanFolder, (_event, folder: string) => scanMediaFolder(folder))
+  ipcMain.handle(IPC.appReadyToClose, () => {
+    if (!win.isDestroyed()) win.destroy()
+  })
 }

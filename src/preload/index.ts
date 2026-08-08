@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC, type IpcApi } from '../shared/types'
+import { IPC, type IpcApi, type StoreSnapshot } from '../shared/types'
 
 const api: IpcApi = {
   window: {
@@ -14,6 +14,23 @@ const api: IpcApi = {
     openFolder: () => ipcRenderer.invoke(IPC.dialogOpenFolder),
     openFile: () => ipcRenderer.invoke(IPC.dialogOpenFile),
     save: (defaultName) => ipcRenderer.invoke(IPC.dialogSave, defaultName)
+  },
+  store: {
+    getAll: () => ipcRenderer.invoke(IPC.storeGetAll),
+    saveAll: (snapshot: StoreSnapshot) => ipcRenderer.invoke(IPC.storeSaveAll, snapshot)
+  },
+  media: {
+    scanFolder: (folder: string) => ipcRenderer.invoke(IPC.mediaScanFolder, folder)
+  },
+  app: {
+    onClosing: (callback: () => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on(IPC.appClosing, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC.appClosing, listener)
+      }
+    },
+    readyToClose: () => ipcRenderer.invoke(IPC.appReadyToClose)
   }
 }
 
