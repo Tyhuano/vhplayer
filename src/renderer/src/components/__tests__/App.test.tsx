@@ -30,6 +30,9 @@ describe('App 分屏渲染', () => {
   beforeEach(async () => {
     container = document.createElement('div')
     document.body.appendChild(container)
+    // 固定 jsdom 视口，避免用例间互相污染
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 })
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 })
     ;(window.api.store.getAll as jest.Mock).mockResolvedValue(snapshot())
     ;(window.api.window.getState as jest.Mock).mockResolvedValue({
       mode: 'window',
@@ -67,7 +70,24 @@ describe('App 分屏渲染', () => {
       useAppStore.setState({ viewMode: 'grid' })
     })
     expect(container.querySelectorAll('.player-view')).toHaveLength(4)
-    expect(container.querySelector('.player-grid')).not.toBeNull()
+    const grid = container.querySelector('.player-grid') as HTMLElement
+    expect(grid).not.toBeNull()
+    expect(grid.style.width).toBe('1024px')
+    expect(grid.style.height).toBe('768px')
+  })
+
+  it('窗口变化时重新计算分屏网格尺寸（保持 4 分屏完整展示）', () => {
+    act(() => {
+      useAppStore.setState({ viewMode: 'grid' })
+    })
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 800 })
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 600 })
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+    const grid = container.querySelector('.player-grid') as HTMLElement
+    expect(grid.style.width).toBe('800px')
+    expect(grid.style.height).toBe('600px')
   })
 
   it('mini + grid → 渲染活动格单格', () => {

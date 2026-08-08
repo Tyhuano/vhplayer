@@ -57,6 +57,17 @@ export default function App(): React.JSX.Element {
 
   const isGrid = viewMode === 'grid' && windowMode !== 'mini'
   const isCompact = compact && windowMode !== 'mini'
+  // 分屏网格尺寸：窗口变化时重新计算并显式注入，保证 4 分屏始终完整铺满展示
+  const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null)
+
+  useEffect(() => {
+    const update = (): void => {
+      setGridSize({ w: window.innerWidth, h: window.innerHeight })
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
 
   return (
     <div className={`app${isCompact ? ' compact' : ''}`}>
@@ -70,8 +81,8 @@ export default function App(): React.JSX.Element {
           </button>
         </div>
       </div>
-      {isGrid ? (
-        <div className="player-grid">
+      {isGrid && gridSize ? (
+        <div className="player-grid" style={{ width: `${gridSize.w}px`, height: `${gridSize.h}px` }}>
           {[0, 1, 2, 3].map((id) => (
             <PlayerView key={id} instanceId={id} />
           ))}
