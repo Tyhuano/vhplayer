@@ -3,9 +3,8 @@ import { useAppStore } from '../store/appStore'
 import { persistNow, schedulePersist } from '../store/appStore'
 import { PlayerCore, type PlayerErrorKind } from '../player/playerCore'
 import { useAutoHide } from '../hooks/useAutoHide'
-import { openFiles, openFolder, openUrl, openUrlInput } from '../store/openMedia'
+import { openFiles, openFolder } from '../store/openMedia'
 import ControlsBar from './ControlsBar'
-import UrlInputOverlay from './UrlInputOverlay'
 import { Icon } from './icons'
 
 interface PlayerViewProps {
@@ -21,6 +20,9 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   const playlists = useAppStore((s) => s.playlists)
   const settings = useAppStore((s) => s.settings)
   const urlInputOpen = useAppStore((s) => s.urlInputOpen)
+  const active = useAppStore((s) => s.activeInstance === instanceId)
+  const viewMode = useAppStore((s) => s.viewMode)
+  const pinned = useAppStore((s) => s.pinned)
   const { visible, onMouseMove, onMouseEnter, onMouseLeave } = useAutoHide()
 
   const playlist = playlists.find((p) => p.id === instance.playlistId) ?? null
@@ -31,16 +33,20 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
+    useAppStore.getState().registerVideo(instanceId, video)
     const core = new PlayerCore(video, {
       onPlaying: () => useAppStore.getState().updateInstance(instanceId, { isPlaying: true }),
       onPaused: () => useAppStore.getState().updateInstance(instanceId, { isPlaying: false }),
       onEnded: () => useAppStore.getState().nextInInstance(instanceId),
-      onError: (kind, message) => setError({ kind, message })
+      onError: (kind, message) => setError({ kind, message }),
+      onLoadedMetadata: (w, h) => useAppStore.getState().setVideoSize(instanceId, w, h)
     })
     coreRef.current = core
     return () => {
       core.destroy()
       coreRef.current = null
+      useAppStore.getState().registerVideo(instanceId, null)
+      useAppStore.getState().setVideoSize(instanceId, 0, 0)
     }
   }, [instanceId])
 
@@ -99,10 +105,8 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentItem?.id, settings.autoResume])
 
-  const handleToggleMini = async (): Promise<void> => {
-    const state = await window.api.window.getState()
-    if (state.mode === 'mini') await window.api.window.exitMini()
-    else await window.api.window.enterMini()
+  const handleToggleMini = (): void => {
+    void useAppStore.getState().toggleMini()
   }
 
   const retry = (): void => {
@@ -117,7 +121,17 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
   }
 
   return (
-    <div className="player-view" onMouseMove={onMouseMove} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+    <div
+      className={`player-view${active ? ' active' : ''}`}
+      onMouseMove={onMouseMove}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={() => {
+        if (useAppStore.getState().activeInstance !== instanceId) {
+          useAppStore.getState().setActiveInstance(instanceId)
+        }
+      }}
+    >
       <video ref={videoRef} className="player-video" style={{ objectFit: instance.scaleMode }} playsInline />
       <div className="player-title">{currentItem?.title ?? 'VHplayer'}</div>
       <div className="player-actions">
@@ -127,14 +141,27 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         <button title="打开文件夹" onClick={() => void openFolder(instanceId)}>
           <Icon name="folder" />
         </button>
-        <button title="打开网络流" onClick={openUrlInput}>
+        <button title="打开网络流" onClick={() => useAppStore.getState().openUrlInput()}>
           <Icon name="globe" />
+        </button>
+        <button
+          title={viewMode === 'grid' ? '退出分屏' : '分屏'}
+          onClick={() => useAppStore.getState().toggleGridMode()}
+        >
+          <Icon name="grid" />
         </button>
         <button title="播放列表" onClick={() => useAppStore.getState().togglePanel()}>
           <Icon name="list" />
         </button>
-        <button title="置顶小窗" onClick={() => void handleToggleMini()}>
+        <button
+          title={pinned ? '取消置顶' : '置顶'}
+          className={`pinned-btn${pinned ? ' active' : ''}`}
+          onClick={() => void useAppStore.getState().togglePinned()}
+        >
           <Icon name="pin" />
+        </button>
+        <button title="置顶小窗" onClick={() => void handleToggleMini()}>
+          <Icon name="minimize2" />
         </button>
         <button title="全屏" onClick={() => void window.api.window.toggleFullscreen()}>
           <Icon name="maximize" />
@@ -154,12 +181,6 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         </div>
       )}
       <ControlsBar instanceId={instanceId} visible={visible} />
-      {urlInputOpen && (
-        <UrlInputOverlay
-          onCancel={() => useAppStore.getState().closeUrlInput()}
-          onConfirm={(url) => openUrl(instanceId, url)}
-        />
-      )}
     </div>
   )
 }
