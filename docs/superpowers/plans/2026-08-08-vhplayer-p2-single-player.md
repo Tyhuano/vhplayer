@@ -1986,7 +1986,7 @@ npm test
 npm run build
 ```
 
-预期：typecheck 无报错；全部测试通过（20+ 用例）；build 成功。
+预期：typecheck 无报错；全部测试通过（39 用例，含 2 个 React 集成测试）；build 成功。
 
 - [ ] **Step 2: 手动验收（dev）**
 
@@ -1995,16 +1995,16 @@ npm run dev
 ```
 
 验收清单（P2 范围）：
-- [ ] 「打开」选本地 mp4 → 自动播放，标题显示文件名，进度可拖动 seek
-- [ ] 「文件夹」打开含多个视频的目录 → 生成列表，⏮/⏭ 切换下一集
-- [ ] 「网络流」输入 m3u8 → hls.js 播放；输入错误地址 → 错误浮层，可「重试/下一项」
-- [ ] 鼠标移到播放区 → 控制列出现；静止 2.5s 自动隐藏；移动鼠标立即重现
-- [ ] 音量滑杆/静音/倍速循环（0.5→1→1.5→2→3）/模式（顺序→循环→随机）工作
-- [ ] 快捷键：空格 播放暂停、←/→ 5s、↑/↓ 音量、M 静音、F 全屏、P 置顶小窗、Esc 退出
-- [ ] 播放中切换全屏/置顶/退出 → 窗口形态变化正常；切换视频不改变窗口大小
-- [ ] 播放一段后关闭窗口 → 重开应用 → 自动续播到记忆位置（进度条有白色记忆标记点）
-- [ ] 列表尾部「顺序」模式播完 → 停止；「循环」模式 → 回到第一集
-- [ ] 内存抽查：切换多个视频后，主进程任务管理器内存不持续增长（引擎释放生效）
+- [x] 「打开」选本地 mp4 → 自动播放，标题显示文件名，进度可拖动 seek
+- [x] 「文件夹」打开含多个视频的目录 → 生成列表，⏮/⏭ 切换下一集
+- [x] 「网络流」输入 m3u8 → hls.js 播放；输入错误地址 → 错误浮层，可「重试/下一项/关闭」
+- [x] 鼠标移到播放区 → 控制列出现；静止 2.5s 自动隐藏；移动鼠标立即重现
+- [x] 音量滑杆/静音/倍速循环（0.5→1→1.5→2→3）/模式（顺序→循环→随机）工作
+- [x] 快捷键：空格 播放暂停、←/→ 5s、↑/↓ 音量、M 静音、F 全屏、P 置顶小窗、Esc 退出全屏/置顶
+- [x] 播放中切换全屏/置顶/退出 → 窗口形态变化正常；切换视频不改变窗口大小
+- [x] 播放一段后关闭 → 重开应用 → 自动续播到记忆位置；续播 seek 完成后记忆点消失；关闭/切视频时重新快照
+- [x] 列表尾部「顺序」模式播完 → 停止；「循环」模式 → 回到第一集
+- [x] 内存抽查：切换多个视频后内存不持续增长（引擎释放 + 懒加载生效）
 
 - [ ] **Step 3: 最终提交**
 
@@ -2016,12 +2016,31 @@ git status --short
 
 ---
 
+## 实施变更记录（与实际实现差异）
+
+以下为实施过程中对计划的修正，均已通过测试与人工验收：
+
+1. **本地媒体协议（Task 4 之后新增）**：`file://` 在 dev（http 页面）被 Chromium 拒绝（`Not allowed to load local resource`，error code 4）。最终实现：主进程注册自定义协议 `vh://`（`registerSchemesAsPrivileged` + `standard/secure/stream`），URL 形式 `vh://local/<盘符路径>`（盘符必须置于 path 位置，否则被 URL 解析吞掉冒号），协议处理器用 `fs.createReadStream` + 手动 `Range` 206 响应（`net.fetch` 不支持 file Range）。`toFileUrl` 输出 vh URL；dev/prod 行为一致。
+2. **流引擎懒加载（Task 3 之后优化）**：hls.js/flv.js 改为动态 `import()`，本地文件播放不加载任何流引擎；构建产物主 chunk 2,182KB → 585KB，hls/flv 各自独立懒加载 chunk。
+3. **控制栏 hover 修复**：`useAutoHide` 从 ControlsBar 自身移出，改挂在 PlayerView 根元素（不可见时 `pointer-events: none` 导致原方案永远无法触发 hover）。
+4. **错误浮层增强**：显示错误细节 + 「关闭」按钮 + 点击背景关闭（此前浮层盖住全部按钮）。
+5. **记忆续播最终设计（Task 9 重写）**：
+   - 记忆点 = 「上次离开时的位置」，**播放中不漂移**
+   - 离开快照：切换视频时保存旧项退出位置；关闭时 `flushPositions()` 快照全部实例
+   - 周期兜底：每 15s `persistPositionOnly()` 直接把当前播放位置写盘（不更新 UI 记忆点），覆盖进程被强杀（关终端）导致 close 事件不触发的场景，最多丢 15s
+   - 恢复：hydrate → loadedmetadata → `seek(lastPosition)`（下限 2s，接近结尾跳过）；**seeked 事件完成后才消费清除记忆点**
+   - 曾踩坑：节流重置为 0 导致切视频首帧（0.013s）被立即保存；已改为恢复下限 2s + seeked 消费
+6. **测试环境**：jest 升级 jsdom 环境 + `tests/setup.ts` 补齐 HTMLMediaElement 方法；jest.config 支持 `.tsx`（jsx: react-jsx）；新增 React 集成测试 `playerViewResume.test.tsx`（hydrate 时序 + seek 恢复 + 记忆点消费）。
+7. **工具链修正**：typescript 从 7（Go 原生版，ts-jest 不兼容）降级到 5.9；jest 30 的 `mock.instances` 对返回对象的 mockImplementation 不生效，Hls mock 改用外部 `__instances` 数组；jest 28+ 需单独安装 `jest-environment-jsdom`；flv.js 自带类型（无需 @types/flv.js）；vite 固定 7.x + @vitejs/plugin-react 5.x（electron-vite 兼容）。
+
+---
+
 ## 自我审查记录（Self-Review）
 
-**Spec 覆盖：** P2 覆盖需求 1（沉浸式标题区）、2（切视频不动窗口）、3 部分（文件夹生成列表）、4（m3u8 播放）、8 部分（基础控制/倍速/缩放模式待 P4/快捷键/记忆位置）、9（resizable 系统原生 + 视频 contain 跟随）、13（鼠标静止隐藏控制列）。分屏（11）、收藏/来源管理（5/6/7）、右键菜单（12）、下载（10）、设置（14 菜单项）归 P3-P6。
+**Spec 覆盖：** P2 覆盖需求 1（沉浸式标题区）、2（切视频不动窗口）、3 部分（文件夹生成列表）、4（m3u8 播放）、8 部分（基础控制/倍速/快捷键/记忆位置）、9（resizable 系统原生 + 视频 contain 跟随）、13（鼠标静止隐藏控制列）。分屏（11）、收藏/来源管理（5/6/7）、右键菜单（12）、下载（10）、设置（14 菜单项）归 P3-P6。
 
 **占位符扫描：** 无 TBD/TODO；所有代码完整。
 
 **类型一致性：** `StoreSnapshot`/`IPC` 常量/IpcApi 在 Task 4 定义后，preload 与渲染进程直接引用；`PlayerCoreEvents` 回调签名在 PlayerView 使用处与实现一致；`AppStore` actions 名称（nextInInstance/updateItemLastPosition 等）在 PlayerView/ControlsBar/useShortcuts 中统一。
 
-**已知取舍：** ControlsBar 通过 `document.querySelector('.player-view video')` 获取 video 元素（多实例时由 PlayerView 传入具体实例的 video——P4 分屏时改造为 ref 传递）。进度条用原生 range input，P3 后按需美化。
+**已知取舍：** flushPositions/persistPositionOnly 通过 `document.querySelectorAll('.player-view video')` 按实例 id 取 video 元素（单实例正确；P4 分屏时改造为 ref 传递）。进度条用原生 range input，P3 后按需美化。
