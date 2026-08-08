@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useAppStore } from '../store/appStore'
+import { MODE_LABEL, useAppStore } from '../store/appStore'
 
 interface ControlsBarProps {
   instanceId: number
@@ -16,11 +16,10 @@ function formatTime(seconds: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
-const MODE_LABEL: Record<string, string> = { order: '顺序', loop: '循环', random: '随机' }
-
 export default function ControlsBar({ instanceId, visible }: ControlsBarProps): React.JSX.Element {
   const instance = useAppStore((s) => s.instances[instanceId])
   const playlists = useAppStore((s) => s.playlists)
+  const favorites = useAppStore((s) => s.favorites)
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
@@ -29,6 +28,7 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
 
   const playlist = playlists.find((p) => p.id === instance.playlistId) ?? null
   const currentItem = playlist?.items[instance.currentIndex] ?? null
+  const isFav = currentItem ? favorites.items.some((f) => f.id === currentItem.id) : false
 
   useEffect(() => {
     const root = document.querySelector('.player-view')
@@ -109,6 +109,13 @@ export default function ControlsBar({ instanceId, visible }: ControlsBarProps): 
         </button>
         <button title="下一集" onClick={() => useAppStore.getState().nextInInstance(instanceId)}>
           ⏭
+        </button>
+        <button
+          title={isFav ? '取消收藏' : '收藏'}
+          className={`fav-btn${isFav ? ' active' : ''}`}
+          onClick={() => useAppStore.getState().toggleFavorite()}
+        >
+          {isFav ? '♥' : '♡'}
         </button>
         <button title="倍速" onClick={() => useAppStore.getState().cycleRate(instanceId)}>
           {instance.rate}x

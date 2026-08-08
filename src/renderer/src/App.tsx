@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import PlayerView from './components/PlayerView'
+import SidePanel from './components/SidePanel'
+import ContextMenu from './components/ContextMenu'
 import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
 import { useShortcuts } from './hooks/useShortcuts'
@@ -32,6 +34,8 @@ export default function App(): React.JSX.Element {
     <div className="app">
       <div className="app-titlebar" />
       <PlayerView instanceId={activeInstance} />
+      <SidePanel />
+      <ContextMenu />
     </div>
   )
 }

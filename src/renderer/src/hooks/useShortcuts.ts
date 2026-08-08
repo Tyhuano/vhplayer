@@ -56,7 +56,20 @@ export function useShortcuts(): void {
             else void window.api.window.enterMini()
           })
           break
+        case 'l':
+        case 'L':
+          state.togglePanel()
+          break
         case 'Escape':
+          // 优先级链：右键菜单 → 面板 → 退出全屏/置顶
+          if (state.menuOpen) {
+            state.closeMenu()
+            return
+          }
+          if (state.panelOpen) {
+            state.closePanel()
+            return
+          }
           void window.api.window.getState().then((s) => {
             if (s.mode === 'fullscreen') void window.api.window.exitFullscreen()
             else if (s.mode === 'mini') void window.api.window.exitMini()
@@ -64,7 +77,15 @@ export function useShortcuts(): void {
           break
       }
     }
+    const onContextMenu = (e: MouseEvent): void => {
+      e.preventDefault()
+      useAppStore.getState().openMenu(e.clientX, e.clientY)
+    }
     window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    window.addEventListener('contextmenu', onContextMenu)
+    return () => {
+      window.removeEventListener('keydown', handler)
+      window.removeEventListener('contextmenu', onContextMenu)
+    }
   }, [])
 }
