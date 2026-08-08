@@ -146,3 +146,18 @@ export async function persistNow(): Promise<void> {
   }
   await window.api.store.saveAll(snapshot)
 }
+
+/** 关闭前把各实例当前播放位置写入 lastPosition（单实例场景取 .player-view video） */
+export function flushPositions(): void {
+  const state = useAppStore.getState()
+  const videos = Array.from(document.querySelectorAll<HTMLVideoElement>('.player-view video'))
+  for (const ins of state.instances) {
+    if (ins.playlistId === null) continue
+    const playlist = state.playlists.find((p) => p.id === ins.playlistId)
+    const item = playlist?.items[ins.currentIndex]
+    const video = videos[ins.id]
+    if (item && video && Number.isFinite(video.currentTime) && video.currentTime > 0) {
+      useAppStore.getState().updateItemLastPosition(ins.playlistId, item.id, video.currentTime)
+    }
+  }
+}

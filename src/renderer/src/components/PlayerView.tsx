@@ -27,7 +27,8 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
 
   const currentItemRef = useRef(currentItem)
   currentItemRef.current = currentItem
-  const lastSaveRef = useRef(0)
+  const lastSaveMsRef = useRef(0)
+  const lastPosRef = useRef(0)
 
   useEffect(() => {
     const video = videoRef.current
@@ -42,8 +43,10 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         const ins = useAppStore.getState().instances[instanceId]
         if (item && ins.playlistId) {
           const now = video.currentTime
-          if (now - lastSaveRef.current > 10) {
-            lastSaveRef.current = now
+          const nowMs = Date.now()
+          if (now > 0 && (nowMs - lastSaveMsRef.current > 10000 || now < lastPosRef.current - 5)) {
+            lastSaveMsRef.current = nowMs
+            lastPosRef.current = now
             useAppStore.getState().updateItemLastPosition(ins.playlistId, item.id, now)
             schedulePersist()
           }
@@ -61,6 +64,8 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const core = coreRef.current
     if (!core || !currentItem) return
     setError(null)
+    lastSaveMsRef.current = 0
+    lastPosRef.current = 0
     void (async () => {
       await core.load(currentItem)
       core.setVolume(instance.volume)
@@ -83,7 +88,8 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
     const video = videoRef.current
     if (!video) return
     const onMeta = (): void => {
-      if (currentItem.lastPosition && currentItem.lastPosition < video.duration - 3) {
+      const skipThreshold = Math.min(3, video.duration * 0.2)
+      if (currentItem.lastPosition && currentItem.lastPosition < video.duration - skipThreshold) {
         video.currentTime = currentItem.lastPosition
       }
       video.removeEventListener('loadedmetadata', onMeta)

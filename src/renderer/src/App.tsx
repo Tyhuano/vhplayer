@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import PlayerView from './components/PlayerView'
 import { useAppStore } from './store/appStore'
-import { persistNow } from './store/appStore'
+import { flushPositions, persistNow } from './store/appStore'
 import { useShortcuts } from './hooks/useShortcuts'
 
 export default function App(): React.JSX.Element {
@@ -15,6 +15,7 @@ export default function App(): React.JSX.Element {
 
   useEffect(() => {
     return window.api.app.onClosing(() => {
+      flushPositions()
       void persistNow().finally(() => window.api.app.readyToClose())
     })
   }, [])
