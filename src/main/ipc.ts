@@ -42,7 +42,6 @@ export function registerIpc(win: BrowserWindow): void {
     ]
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
   })
-  })
   ipcMain.handle(IPC.windowMinimize, () => win.minimize())
   ipcMain.handle(IPC.windowClose, () => win.close())
 
