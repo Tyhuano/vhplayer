@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'node:path'
+import { registerIpc } from './ipc'
 
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
@@ -25,6 +26,8 @@ function createWindow(): BrowserWindow {
     shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  registerIpc(win)
 
   const devUrl = process.env['ELECTRON_RENDERER_URL']
   if (!app.isPackaged && devUrl) {
