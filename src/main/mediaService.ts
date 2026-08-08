@@ -21,7 +21,9 @@ export async function scanMediaFolder(folder: string): Promise<MediaItem[]> {
     const paths = entries
       .filter((e) => e.isFile() && SUPPORTED_EXTENSIONS.has(extname(e.name).toLowerCase()))
       .map((e) => join(folder, e.name))
-    return Promise.all(paths.map(toMediaItem))
+    const items = await Promise.all(paths.map(toMediaItem))
+    // 文件夹列表按文件修改时间升序排列（旧→新），作为播放顺序
+    return items.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
   } catch {
     return []
   }

@@ -58,6 +58,17 @@ describe('scanMediaFolder', () => {
     expect(Math.abs((b?.createdAt ?? 0) - MTIME_NEW)).toBeLessThan(2000)
   })
 
+  it('文件夹列表按修改时间升序排列（旧→新，即播放顺序）', async () => {
+    utimesSync(join(dir, 'b.WEBM'), new Date(MTIME_NEW), new Date(MTIME_NEW))
+    utimesSync(join(dir, 'a.mp4'), new Date(MTIME_OLD), new Date(MTIME_OLD))
+    utimesSync(join(dir, 'c.flv'), new Date(MTIME_OLD + 60000), new Date(MTIME_OLD + 60000))
+    const items = await scanMediaFolder(dir)
+    const order = items.map((i) => i.value.split(/[\\/]/).pop())
+    expect(order.indexOf('a.mp4')).toBeLessThan(order.indexOf('b.WEBM'))
+    expect(order.indexOf('a.mp4')).toBeLessThan(order.indexOf('c.flv'))
+    expect(order.indexOf('c.flv')).toBeLessThan(order.indexOf('b.WEBM'))
+  })
+
   it('mediaItemsFromPaths 按路径 stat 生成带 mtime 的 MediaItem', async () => {
     utimesSync(join(dir, 'live.m3u8'), new Date(MTIME_OLD), new Date(MTIME_OLD))
     const items = await mediaItemsFromPaths([join(dir, 'live.m3u8')])
