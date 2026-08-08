@@ -7,6 +7,7 @@ import { Icon } from './components/icons'
 import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
 import { openUrl } from './store/openMedia'
+import { avgVideoRatio } from './gridLayout'
 import { useShortcuts } from './hooks/useShortcuts'
 import { useWindowDrag } from './hooks/useWindowDrag'
 import { useWindowResize } from './hooks/useWindowResize'
@@ -57,6 +58,11 @@ export default function App(): React.JSX.Element {
 
   const isGrid = viewMode === 'grid' && windowMode !== 'mini'
   const isCompact = compact && windowMode !== 'mini'
+  // 分屏网格保持视频平均比例（contain 居中）：窗口任意变化网格按比例自适应，不随窗口比例错位
+  const gridRatio = useAppStore((s) => {
+    const r = avgVideoRatio([0, 1, 2, 3].map((id) => s.videoSizes[id] ?? null))
+    return r ?? 16 / 9
+  })
 
   return (
     <div className={`app${isCompact ? ' compact' : ''}`}>
@@ -71,10 +77,15 @@ export default function App(): React.JSX.Element {
         </div>
       </div>
       {isGrid ? (
-        <div className="player-grid">
-          {[0, 1, 2, 3].map((id) => (
-            <PlayerView key={id} instanceId={id} />
-          ))}
+        <div className="player-grid-wrap">
+          <div
+            className="player-grid"
+            style={{ aspectRatio: String(gridRatio), width: `min(100%, calc(100vh * ${gridRatio}))` }}
+          >
+            {[0, 1, 2, 3].map((id) => (
+              <PlayerView key={id} instanceId={id} />
+            ))}
+          </div>
         </div>
       ) : (
         <PlayerView instanceId={activeInstance} />

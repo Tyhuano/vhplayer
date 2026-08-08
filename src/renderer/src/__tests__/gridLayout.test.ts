@@ -1,4 +1,24 @@
-import { computeGridBounds } from '../gridLayout'
+import { avgVideoRatio, computeGridBounds } from '../gridLayout'
+
+describe('avgVideoRatio', () => {
+  it('无有效尺寸 → null', () => {
+    expect(avgVideoRatio([null, null, null, null])).toBeNull()
+    expect(avgVideoRatio([{ w: 0, h: 0 }, null, { w: -1, h: 2 }, null])).toBeNull()
+  })
+
+  it('单个尺寸取其宽高比', () => {
+    expect(avgVideoRatio([{ w: 1920, h: 1080 }, null, null, null])).toBeCloseTo(16 / 9, 6)
+  })
+
+  it('多个尺寸取宽高比平均值', () => {
+    // (16/9 + 4/3) / 2
+    expect(avgVideoRatio([{ w: 1920, h: 1080 }, { w: 640, h: 480 }, null, null])).toBeCloseTo((16 / 9 + 4 / 3) / 2, 6)
+  })
+
+  it('忽略无效项', () => {
+    expect(avgVideoRatio([{ w: 0, h: 0 }, { w: 640, h: 480 }, null, null])).toBeCloseTo(4 / 3, 6)
+  })
+})
 
 describe('computeGridBounds', () => {
   const cur = { x: 100, y: 50, width: 960, height: 540 }

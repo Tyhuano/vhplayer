@@ -41,13 +41,7 @@ export function registerIpc(win: BrowserWindow): void {
       Math.min(Math.max(1, Math.round(height)), Math.round(area.height * 1.5))
     ]
     win.setBounds({ x: Math.round(x), y: Math.round(y), width: expectedSize[0], height: expectedSize[1] })
-    console.log('[ipc] resizeTo target', Math.round(width), 'x', Math.round(height), '=> actual', JSON.stringify(win.getBounds()))
-    void win.webContents
-      .executeJavaScript(
-        `JSON.stringify({iw: window.innerWidth, ih: window.innerHeight, grid: (document.querySelector('.player-grid') ? document.querySelector('.player-grid').getBoundingClientRect().width + 'x' + document.querySelector('.player-grid').getBoundingClientRect().height : 'none'), app: document.querySelector('.app') ? document.querySelector('.app').getBoundingClientRect().width + 'x' + document.querySelector('.app').getBoundingClientRect().height : 'none'})`
-      )
-      .then((v) => console.log('[view]', v))
-      .catch(() => {})
+  })
   })
   ipcMain.handle(IPC.windowMinimize, () => win.minimize())
   ipcMain.handle(IPC.windowClose, () => win.close())

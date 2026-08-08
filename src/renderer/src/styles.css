@@ -96,9 +96,19 @@ body,
   background: #000;
 }
 
-.player-grid {
+/* 分屏网格外层：满铺窗口、居中，窗口多余区域显示黑底 */
+.player-grid-wrap {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+/* 分屏网格：保持视频平均宽高比（contain），窗口任意变化网格按比例自适应居中，
+   不随窗口比例错位；宽高由 App 注入的 aspect-ratio 与 width: min(100%, calc(100vh*R)) 决定 */
+.player-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
