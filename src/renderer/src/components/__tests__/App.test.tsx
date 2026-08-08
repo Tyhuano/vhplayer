@@ -62,26 +62,12 @@ describe('App 分屏渲染', () => {
     expect(container.querySelectorAll('.player-view')).toHaveLength(1)
   })
 
-  it('grid 模式渲染 4 个 .player-view', () => {
+  it('grid 模式渲染 4 个 .player-view（等分铺满窗口）', () => {
     act(() => {
       useAppStore.setState({ viewMode: 'grid' })
     })
     expect(container.querySelectorAll('.player-view')).toHaveLength(4)
-  })
-
-  it('分屏网格保持视频平均宽高比（JS 显式 contain 尺寸，不随窗口比例错位）', () => {
-    act(() => {
-      useAppStore.setState({
-        viewMode: 'grid',
-        videoSizes: { 0: { w: 1920, h: 1080 }, 1: null, 2: null, 3: null }
-      })
-    })
-    expect(container.querySelector('.player-grid-wrap')).not.toBeNull()
-    const grid = container.querySelector('.player-grid') as HTMLElement
-    expect(grid).not.toBeNull()
-    // jsdom 视口 1024x768，16:9 网格：宽 = 视口宽 1024，高 = 1024/(16/9) = 576
-    expect(grid.style.width).toBe('1024px')
-    expect(grid.style.height).toBe('576px')
+    expect(container.querySelector('.player-grid')).not.toBeNull()
   })
 
   it('mini + grid → 渲染活动格单格', () => {

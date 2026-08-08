@@ -7,7 +7,6 @@ import { Icon } from './components/icons'
 import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
 import { openUrl } from './store/openMedia'
-import { avgVideoRatio } from './gridLayout'
 import { useShortcuts } from './hooks/useShortcuts'
 import { useWindowDrag } from './hooks/useWindowDrag'
 import { useWindowResize } from './hooks/useWindowResize'
@@ -58,30 +57,6 @@ export default function App(): React.JSX.Element {
 
   const isGrid = viewMode === 'grid' && windowMode !== 'mini'
   const isCompact = compact && windowMode !== 'mini'
-  // 分屏网格保持视频平均比例（contain 居中）：窗口任意变化网格按比例自适应，不随窗口比例错位
-  const gridRatio = useAppStore((s) => {
-    const r = avgVideoRatio([0, 1, 2, 3].map((id) => s.videoSizes[id] ?? null))
-    return r ?? 16 / 9
-  })
-  // 网格渲染尺寸：显式 contain 计算（width/height 直接注入，避免 aspect-ratio 被内容撑破）
-  const [gridSize, setGridSize] = useState<{ w: number; h: number } | null>(null)
-
-  useEffect(() => {
-    const update = (): void => {
-      const vw = window.innerWidth
-      const vh = window.innerHeight
-      let w = vw
-      let h = w / gridRatio
-      if (h > vh) {
-        h = vh
-        w = h * gridRatio
-      }
-      setGridSize({ w: Math.round(w), h: Math.round(h) })
-    }
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [gridRatio])
 
   return (
     <div className={`app${isCompact ? ' compact' : ''}`}>
@@ -95,16 +70,11 @@ export default function App(): React.JSX.Element {
           </button>
         </div>
       </div>
-      {isGrid && gridSize ? (
-        <div className="player-grid-wrap">
-          <div
-            className="player-grid"
-            style={{ width: `${gridSize.w}px`, height: `${gridSize.h}px` }}
-          >
-            {[0, 1, 2, 3].map((id) => (
-              <PlayerView key={id} instanceId={id} />
-            ))}
-          </div>
+      {isGrid ? (
+        <div className="player-grid">
+          {[0, 1, 2, 3].map((id) => (
+            <PlayerView key={id} instanceId={id} />
+          ))}
         </div>
       ) : (
         <PlayerView instanceId={activeInstance} />
