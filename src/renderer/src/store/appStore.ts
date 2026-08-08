@@ -140,7 +140,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     void (async () => {
       const win = await window.api.window.getState()
       if (get().viewMode !== 'grid') return
-      const bounds = computeGridBounds(sizes, win.bounds)
+      const bounds = computeGridBounds(sizes, win.bounds, {
+        w: window.screen.availWidth,
+        h: window.screen.availHeight
+      })
       if (bounds) await window.api.window.resizeTo(bounds.x, bounds.y, bounds.width, bounds.height)
     })()
   },
