@@ -75,7 +75,7 @@ export function useShortcuts(): void {
           }
           void window.api.window.getState().then((s) => {
             if (s.mode === 'fullscreen') void window.api.window.exitFullscreen()
-            else if (s.mode === 'mini') void window.api.window.exitMini()
+            else if (s.mode === 'mini') void state.toggleMini()
           })
           break
       }

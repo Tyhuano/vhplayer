@@ -68,4 +68,19 @@ describe('useShortcuts 分屏相关', () => {
     expect(window.api.window.enterMini).toHaveBeenCalled()
     expect(useAppStore.getState().windowMode).toBe('mini')
   })
+
+  it('Esc 退出置顶小窗并同步 windowMode（分屏可恢复）', async () => {
+    useAppStore.setState({ windowMode: 'mini' })
+    ;(window.api.window.getState as jest.Mock).mockResolvedValue({
+      mode: 'mini',
+      bounds: { x: 0, y: 0, width: 420, height: 280 },
+      pinned: false
+    })
+    press('Escape')
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    expect(window.api.window.exitMini).toHaveBeenCalled()
+    expect(useAppStore.getState().windowMode).toBe('window')
+  })
 })
