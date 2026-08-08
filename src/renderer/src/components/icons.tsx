@@ -20,6 +20,7 @@ export type IconName =
   | 'shuffle'
   | 'zap'
   | 'minus'
+  | 'plus'
   | 'x'
   | 'trash'
   | 'refresh'
@@ -126,6 +127,12 @@ const ICON_PATHS: Record<IconName, ReactElement> = {
   ),
   zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
   minus: <line x1="5" y1="12" x2="19" y2="12" />,
+  plus: (
+    <>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </>
+  ),
   x: (
     <>
       <line x1="18" y1="6" x2="6" y2="18" />

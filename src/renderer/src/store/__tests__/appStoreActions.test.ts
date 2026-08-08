@@ -141,4 +141,26 @@ describe('appStore actions', () => {
     useAppStore.getState().clearPlaylist('p1')
     expect(useAppStore.getState().playlists[0].items).toHaveLength(0)
   })
+
+  it('createPlaylist 创建空列表并返回 id', () => {
+    const id = useAppStore.getState().createPlaylist('我的列表')
+    const list = useAppStore.getState().playlists.find((p) => p.id === id)
+    expect(list?.name).toBe('我的列表')
+    expect(list?.items).toHaveLength(0)
+    expect(list?.createdAt).toBeGreaterThan(0)
+  })
+
+  it('addItemsToPlaylist 追加引用快照到指定列表', () => {
+    const id = useAppStore.getState().createPlaylist('我的列表')
+    useAppStore.getState().addItemsToPlaylist(id, [
+      { id: 'n1', title: '新一', sourceType: 'file', value: 'C:\\n1.mp4', createdAt: 1 }
+    ])
+    const list = useAppStore.getState().playlists.find((p) => p.id === id)
+    expect(list?.items).toHaveLength(1)
+    expect(list?.items[0].value).toBe('C:\\n1.mp4')
+    useAppStore.getState().addItemsToPlaylist(id, [
+      { id: 'n2', title: '新二', sourceType: 'url', value: 'https://x.com/v.m3u8', createdAt: 2 }
+    ])
+    expect(useAppStore.getState().playlists.find((p) => p.id === id)?.items).toHaveLength(2)
+  })
 })

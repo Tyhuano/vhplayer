@@ -29,6 +29,21 @@ export function openUrl(instanceId: number, url: string): void {
   useAppStore.getState().updateInstance(instanceId, { playlistId: playlist.id, currentIndex: 0, isPlaying: true })
 }
 
+/** 选择本地文件加入指定列表（引用快照：仅存路径与元信息，不复制文件） */
+export async function pickFilesToAdd(playlistId: string): Promise<void> {
+  const paths = await window.api.dialog.openFile()
+  if (!paths || paths.length === 0) return
+  const items = await window.api.media.fromPaths(paths)
+  if (items.length === 0) return
+  useAppStore.getState().addItemsToPlaylist(playlistId, items)
+}
+
+/** 网络流/直链加入指定列表 */
+export function addUrlToPlaylist(playlistId: string, url: string): void {
+  const item = mediaItemFromUrl(url.trim())
+  useAppStore.getState().addItemsToPlaylist(playlistId, [item])
+}
+
 export function openUrlInput(): void {
   useAppStore.getState().openUrlInput()
 }

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useAppStore } from '../store/appStore'
 import { sortItems, type SortMode } from '../store/playlistUtils'
-import { openFiles, openFolder, openUrlInput } from '../store/openMedia'
+import { addUrlToPlaylist, openFiles, openFolder, openUrlInput, pickFilesToAdd } from '../store/openMedia'
 import { Icon } from './icons'
 
 const SORT_OPTIONS: Array<{ mode: SortMode; label: string }> = [
@@ -21,6 +21,10 @@ export default function SidePanel(): React.JSX.Element | null {
   const [selectedListId, setSelectedListId] = useState<string | null>(null)
   const dragFromRef = useRef<number | null>(null)
   const [dropTarget, setDropTarget] = useState<number | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [addingUrl, setAddingUrl] = useState(false)
+  const [urlValue, setUrlValue] = useState('')
 
   if (!panelOpen) return null
 
@@ -59,6 +63,44 @@ export default function SidePanel(): React.JSX.Element | null {
               <button onClick={() => void openFolder(activeInstance)}>文件夹</button>
               <button onClick={() => openUrlInput()}>网络流</button>
             </div>
+            <div className="panel-create">
+              {creating ? (
+                <div className="panel-create-input">
+                  <input
+                    autoFocus
+                    className="panel-text-input"
+                    placeholder="列表名称"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && newName.trim()) {
+                        const id = state.createPlaylist(newName)
+                        setSelectedListId(id)
+                        setCreating(false)
+                        setNewName('')
+                      }
+                      if (e.key === 'Escape') {
+                        setCreating(false)
+                        setNewName('')
+                      }
+                    }}
+                  />
+                  <button className="panel-create-ok" disabled={!newName.trim()} onClick={() => {
+                    const id = state.createPlaylist(newName)
+                    setSelectedListId(id)
+                    setCreating(false)
+                    setNewName('')
+                  }}>
+                    创建
+                  </button>
+                </div>
+              ) : (
+                <button className="panel-create-btn" onClick={() => setCreating(true)}>
+                  <Icon name="plus" size={14} />
+                  新建列表
+                </button>
+              )}
+            </div>
             {playlists.length === 0 ? (
               <div className="panel-empty">暂无播放列表，点击上方按钮添加</div>
             ) : (
@@ -74,6 +116,34 @@ export default function SidePanel(): React.JSX.Element | null {
                     </option>
                   ))}
                 </select>
+                <div className="panel-add-to-list">
+                  <button title="向当前列表添加本地文件" onClick={() => void pickFilesToAdd(effectiveListId ?? '')}>
+                    添加文件
+                  </button>
+                  <button title="向当前列表添加网络流/直链" onClick={() => setAddingUrl((v) => !v)}>
+                    添加流
+                  </button>
+                  {addingUrl && (
+                    <input
+                      autoFocus
+                      className="panel-text-input"
+                      placeholder="https://example.com/live.m3u8"
+                      value={urlValue}
+                      onChange={(e) => setUrlValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && urlValue.trim()) {
+                          addUrlToPlaylist(effectiveListId ?? '', urlValue)
+                          setUrlValue('')
+                          setAddingUrl(false)
+                        }
+                        if (e.key === 'Escape') {
+                          setAddingUrl(false)
+                          setUrlValue('')
+                        }
+                      }}
+                    />
+                  )}
+                </div>
                 <div className="panel-sort-actions">
                   {SORT_OPTIONS.map((o) => (
                     <button

@@ -64,6 +64,12 @@ describe('SidePanel', () => {
     return Array.from(container.querySelectorAll('.panel-item'))
   }
 
+  function setInputValue(input: HTMLInputElement, value: string): void {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    setter?.call(input, value)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+
   it('渲染播放列表 tab 与列表项（默认时间倒序：新在前）', () => {
     renderPanel()
     expect(items()).toHaveLength(3)
@@ -184,5 +190,62 @@ describe('SidePanel', () => {
       mask.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
     expect(useAppStore.getState().panelOpen).toBe(false)
+  })
+
+  it('新建列表：输入名称回车创建并选中', () => {
+    renderPanel()
+    const createBtn = container.querySelector('.panel-create-btn') as HTMLElement
+    act(() => {
+      createBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const input = container.querySelector('.panel-text-input') as HTMLInputElement
+    expect(input).not.toBeNull()
+    act(() => {
+      setInputValue(input, '我的片单')
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    const playlists = useAppStore.getState().playlists
+    expect(playlists).toHaveLength(2)
+    expect(playlists[1].name).toBe('我的片单')
+    expect(playlists[1].items).toHaveLength(0)
+  })
+
+  it('「添加文件」向当前列表追加引用快照（不覆盖其他列表）', async () => {
+    const openFileMock = window.api.dialog.openFile as jest.Mock
+    openFileMock.mockResolvedValue(['C:\\add.mp4'])
+    const fromPathsMock = window.api.media.fromPaths as jest.Mock
+    fromPathsMock.mockResolvedValue([
+      { id: 'a1', title: 'add', sourceType: 'file', value: 'C:\\add.mp4', createdAt: 100 }
+    ])
+    renderPanel()
+    const btn = Array.from(container.querySelectorAll('.panel-add-to-list button')).find(
+      (b) => b.textContent === '添加文件'
+    ) as HTMLElement
+    act(() => {
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    await act(async () => {})
+    const p1 = useAppStore.getState().playlists.find((p) => p.id === 'p1')
+    expect(p1?.items).toHaveLength(4)
+    expect(p1?.items[3].value).toBe('C:\\add.mp4')
+  })
+
+  it('「添加流」输入 URL 回车追加到当前列表', () => {
+    renderPanel()
+    const btn = Array.from(container.querySelectorAll('.panel-add-to-list button')).find(
+      (b) => b.textContent === '添加流'
+    ) as HTMLElement
+    act(() => {
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    const input = container.querySelector('.panel-text-input') as HTMLInputElement
+    act(() => {
+      setInputValue(input, 'https://x.com/live.m3u8')
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    const p1 = useAppStore.getState().playlists.find((p) => p.id === 'p1')
+    expect(p1?.items).toHaveLength(4)
+    expect(p1?.items[3].sourceType).toBe('m3u8')
+    expect(p1?.items[3].value).toBe('https://x.com/live.m3u8')
   })
 })

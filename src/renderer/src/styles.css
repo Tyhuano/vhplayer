@@ -439,6 +439,89 @@ body,
   background: rgba(255, 255, 255, 0.24);
 }
 
+.panel-create {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-create-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-radius: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.panel-create-btn:hover {
+  border-color: #fe2c55;
+  color: #fe2c55;
+}
+
+.panel-create-input {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-text-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #1c1c1e;
+  color: #f5f5f5;
+  font-size: 12px;
+  outline: none;
+}
+
+.panel-text-input:focus {
+  border-color: #fe2c55;
+}
+
+.panel-create-ok {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #fe2c55;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.panel-create-ok:disabled {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: default;
+}
+
+.panel-add-to-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panel-add-to-list button {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.panel-add-to-list button:hover {
+  border-color: rgba(254, 44, 85, 0.6);
+  color: #fe2c55;
+}
+
 .panel-list-select {
   width: 100%;
   padding: 6px 8px;

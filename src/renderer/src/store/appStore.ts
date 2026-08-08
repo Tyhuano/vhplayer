@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AppState, Playlist, PlayerInstance, Settings, StoreSnapshot } from '../../../shared/types'
+import type { AppState, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot } from '../../../shared/types'
 import { reorderItems as reorderList, type SortMode } from './playlistUtils'
 
 export const RATES = [0.5, 1, 1.5, 2, 3]
@@ -32,6 +32,8 @@ export interface AppStore extends AppState {
   setActiveInstance(id: number): void
   updateInstance(id: number, patch: Partial<PlayerInstance>): void
   addPlaylist(playlist: Playlist): void
+  createPlaylist(name: string): string
+  addItemsToPlaylist(playlistId: string, items: MediaItem[]): void
   removeFromPlaylist(playlistId: string, itemId: string): void
   clearPlaylist(playlistId: string): void
   updateItemLastPosition(playlistId: string, itemId: string, position: number): void
@@ -98,6 +100,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   addPlaylist: (playlist) => {
     set({ playlists: [...get().playlists, playlist] })
+    schedulePersist()
+  },
+
+  createPlaylist: (name) => {
+    const id = crypto.randomUUID()
+    const playlist: Playlist = { id, name: name.trim() || '新建列表', items: [], createdAt: Date.now() }
+    set({ playlists: [...get().playlists, playlist] })
+    schedulePersist()
+    return id
+  },
+
+  addItemsToPlaylist: (playlistId, items) => {
+    set({
+      playlists: get().playlists.map((p) =>
+        p.id === playlistId ? { ...p, items: [...p.items, ...items] } : p
+      )
+    })
     schedulePersist()
   },
 
