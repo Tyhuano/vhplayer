@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { AppState, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot, WindowMode } from '../../../shared/types'
+import type { AppState, DownloadTask, MediaItem, Playlist, PlayerInstance, Settings, StoreSnapshot, WindowMode } from '../../../shared/types'
 import { reorderItems as reorderList, type SortMode } from './playlistUtils'
 import { computeGridBounds, type VideoSize } from '../gridLayout'
 
@@ -75,6 +75,16 @@ export interface AppStore extends AppState {
   closeMenu(): void
   openUrlInput(): void
   closeUrlInput(): void
+  downloads: DownloadTask[]
+  downloadNotice: string | null
+  settingsOpen: boolean
+  downloadItem(): Promise<void>
+  cancelDownload(taskId: string): Promise<void>
+  dismissDownload(taskId: string): Promise<void>
+  setDownloads(tasks: DownloadTask[]): void
+  openSettings(): void
+  closeSettings(): void
+  clearDownloadNotice(): void
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -95,6 +105,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   menuX: 0,
   menuY: 0,
   urlInputOpen: false,
+  downloads: [],
+  downloadNotice: null,
+  settingsOpen: false,
 
   hydrate: (snapshot) => {
     const fav =
@@ -324,7 +337,36 @@ export const useAppStore = create<AppStore>((set, get) => ({
   openMenu: (x, y) => set({ menuOpen: true, menuX: x, menuY: y }),
   closeMenu: () => set({ menuOpen: false }),
   openUrlInput: () => set({ urlInputOpen: true }),
-  closeUrlInput: () => set({ urlInputOpen: false })
+  closeUrlInput: () => set({ urlInputOpen: false }),
+
+  downloadItem: async () => {
+    const state = useAppStore.getState()
+    const ins = state.instances[state.activeInstance]
+    const list = ins.playlistId === 'favorites' ? state.favorites : state.playlists.find((p) => p.id === ins.playlistId)
+    const item = list?.items[ins.currentIndex]
+    if (!item || item.sourceType !== 'm3u8') return
+    const video = state.videoRegistry[state.activeInstance]
+    const duration = video && Number.isFinite(video.duration) && video.duration > 0 ? video.duration : undefined
+    const task = await window.api.download.start(item, duration)
+    if (!task) {
+      useAppStore.setState({ downloadNotice: '未找到 ffmpeg，无法下载' })
+      setTimeout(() => useAppStore.setState({ downloadNotice: null }), 5000)
+    }
+  },
+
+  cancelDownload: async (taskId) => {
+    await window.api.download.cancel(taskId)
+  },
+
+  dismissDownload: async (taskId) => {
+    await window.api.download.dismiss(taskId)
+  },
+
+  setDownloads: (tasks) => set({ downloads: tasks }),
+
+  openSettings: () => set({ settingsOpen: true }),
+  closeSettings: () => set({ settingsOpen: false }),
+  clearDownloadNotice: () => set({ downloadNotice: null })
 }))
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null
