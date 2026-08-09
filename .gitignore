@@ -5,3 +5,17 @@ dist/
 .DS_Store
 *.local
 .electron-cache/
+
+# 敏感文件（密钥/凭据/环境变量），防误提交
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_ed25519
+credentials
+secrets.*
