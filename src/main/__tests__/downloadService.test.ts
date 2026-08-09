@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   DownloadService,
+  asarUnpackPath,
   parseTimeFromLine,
   sanitizeFileName,
   resolveOutPath,
@@ -71,6 +72,18 @@ describe('纯函数', () => {
     const second = resolveOutPath(dir, '影片')
     expect(second).toBe(join(dir, '影片 (1).mp4'))
     expect(resolveOutPath(dir, '影片')).toBe(join(dir, '影片 (1).mp4'))
+  })
+
+  it('asarUnpackPath：asar 内 ffmpeg 路径重定向到 unpacked（spawn 可执行）', () => {
+    expect(
+      asarUnpackPath('C:\\app\\resources\\app.asar\\node_modules\\ffmpeg-static\\ffmpeg.exe')
+    ).toBe('C:\\app\\resources\\app.asar.unpacked\\node_modules\\ffmpeg-static\\ffmpeg.exe')
+  })
+
+  it('asarUnpackPath：开发路径（无 app.asar）保持不变，已替换过的路径幂等', () => {
+    expect(asarUnpackPath('C:\\node_modules\\ffmpeg-static\\ffmpeg.exe')).toBe('C:\\node_modules\\ffmpeg-static\\ffmpeg.exe')
+    const once = 'C:\\app\\resources\\app.asar.unpacked\\node_modules\\ffmpeg-static\\ffmpeg.exe'
+    expect(asarUnpackPath(once)).toBe(once)
   })
 })
 

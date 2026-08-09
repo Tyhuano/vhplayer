@@ -33,6 +33,12 @@ export function sanitizeFileName(name: string): string {
   return cleaned || 'download'
 }
 
+/** asar 打包后二进制无法直接 spawn：把 app.asar 路径重定向到 app.asar.unpacked */
+export function asarUnpackPath(p: string): string {
+  if (!p.includes('app.asar') || p.includes('app.asar.unpacked')) return p
+  return p.replace('app.asar', 'app.asar.unpacked')
+}
+
 /** 输出路径：<dir>/<标题>.mp4，存在时追加 (n) */
 export function resolveOutPath(dir: string, title: string): string {
   const base = sanitizeFileName(title)
@@ -66,7 +72,8 @@ export class DownloadService {
 
   constructor(opts: DownloadServiceOptions = {}) {
     this.spawnFn = opts.spawnFn ?? realSpawn
-    this.ffmpegPath = opts.ffmpegPath === undefined ? ((require('ffmpeg-static') as string) ?? null) : opts.ffmpegPath
+    const rawPath = opts.ffmpegPath === undefined ? ((require('ffmpeg-static') as string) ?? null) : opts.ffmpegPath
+    this.ffmpegPath = rawPath ? asarUnpackPath(rawPath) : null
     this.notify = opts.notify
   }
 
