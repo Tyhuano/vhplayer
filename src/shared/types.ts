@@ -56,6 +56,22 @@ export interface WindowState {
   pinned: boolean
 }
 
+export type DownloadStatus = 'queued' | 'running' | 'done' | 'error'
+
+export interface DownloadTask {
+  id: string
+  itemId: string
+  title: string
+  source: string
+  outPath: string
+  status: DownloadStatus
+  /** 0-1；duration 未知时保持 0（UI 显示不确定进度） */
+  progress: number
+  duration?: number
+  error?: string
+  createdAt: number
+}
+
 export interface StoreSnapshot {
   playlists: Playlist[]
   favorites: Playlist
