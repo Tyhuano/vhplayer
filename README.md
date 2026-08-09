@@ -43,7 +43,7 @@
 
 ```bash
 # 克隆并安装依赖
-git clone https://github.com/tohua/vhplayer.git
+git clone https://github.com/Tyhuano/vhplayer.git
 cd vhplayer
 npm install
 
