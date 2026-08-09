@@ -3,6 +3,7 @@ import { createReadStream, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { extname, join } from 'node:path'
 import { registerIpc, downloadServiceRef } from './ipc'
+import { resolveCacheDir } from './appPaths'
 import { IPC } from '../shared/types'
 
 const MEDIA_MIME: Record<string, string> = {
@@ -18,6 +19,11 @@ const MEDIA_MIME: Record<string, string> = {
 protocol.registerSchemesAsPrivileged([
   { scheme: 'vh', privileges: { standard: true, secure: true, stream: true } }
 ])
+
+// 打包版把 Chromium 会话缓存（Cache/GPUCache/Local Storage 等）放安装目录旁 cache/，
+// 非必要不占用 C 盘用户目录；不可写（Program Files）或 dev 模式保持默认
+const sessionCacheDir = resolveCacheDir()
+if (sessionCacheDir) app.setPath('sessionData', sessionCacheDir)
 
 function handleVhProtocol(request: Request): Response {
   let filePath = decodeURIComponent(request.url.slice('vh://local'.length))

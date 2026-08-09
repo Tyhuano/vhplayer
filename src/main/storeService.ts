@@ -21,14 +21,15 @@ export function createMemoryBackend(): StoreBackend {
   }
 }
 
-export function createElectronStoreBackend(): StoreBackend {
-  const Store = require('electron-store') as new () => {
+export function createElectronStoreBackend(cwd?: string): StoreBackend {
+  const Store = require('electron-store') as new (opts?: { cwd?: string }) => {
     get(key: string): unknown
     set(key: string, value: unknown): void
     delete(key: string): void
     has(key: string): boolean
   }
-  const store = new Store()
+  // cwd 指定时把 config.json 写入该目录（打包版为安装目录旁 data/）
+  const store = new Store(cwd ? { cwd } : {})
   return {
     get: (key) => store.get(key),
     set: (key, value) => store.set(key, value),

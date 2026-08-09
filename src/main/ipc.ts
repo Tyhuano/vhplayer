@@ -5,6 +5,7 @@ import { DialogService } from './dialogService'
 import { createElectronStoreBackend, StoreService } from './storeService'
 import { scanMediaFolder, mediaItemsFromPaths } from './mediaService'
 import { DownloadService } from './downloadService'
+import { resolveDataDir } from './appPaths'
 
 /** 模块级引用：供退出前（before-quit）清理下载子进程 */
 export const downloadServiceRef: { current: DownloadService | null } = { current: null }
@@ -25,7 +26,7 @@ export function registerIpc(win: BrowserWindow): void {
     getBounds: () => win.getBounds()
   })
   const dialog = new DialogService(win)
-  const store = new StoreService(createElectronStoreBackend())
+  const store = new StoreService(createElectronStoreBackend(resolveDataDir()))
 
   const downloadService = new DownloadService({
     notify: (tasks: DownloadTask[]) => {
