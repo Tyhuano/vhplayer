@@ -4,7 +4,7 @@ const { PNG } = require('pngjs')
 const fs = require('fs')
 const path = require('path')
 
-const BUILD = path.join(__dirname, 'build')
+const BUILD = path.join(__dirname, '..', 'build')
 
 // 科技感配色
 const CYAN = [0, 229, 255, 255] // #00E5FF
