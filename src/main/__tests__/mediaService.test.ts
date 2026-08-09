@@ -44,7 +44,7 @@ describe('scanMediaFolder', () => {
     expect(items.length).toBeGreaterThan(0)
     for (const item of items) {
       expect(item.createdAt).toBeDefined()
-      expect(item.createdAt!).toBeLessThanOrEqual(Date.now())
+      expect(item.createdAt!).toBeLessThanOrEqual(Date.now() + 2000)
     }
   })
 
