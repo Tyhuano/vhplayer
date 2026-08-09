@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { IPC, type IpcApi, type StoreSnapshot } from '../shared/types'
+import { IPC, type DownloadTask, type IpcApi, type MediaItem, type StoreSnapshot } from '../shared/types'
 
 const api: IpcApi = {
   window: {
@@ -27,6 +27,20 @@ const api: IpcApi = {
   media: {
     scanFolder: (folder: string) => ipcRenderer.invoke(IPC.mediaScanFolder, folder),
     fromPaths: (paths: string[]) => ipcRenderer.invoke(IPC.mediaFromPaths, paths)
+  },
+  download: {
+    get: () => ipcRenderer.invoke(IPC.downloadGet),
+    start: (item: MediaItem, duration?: number) => ipcRenderer.invoke(IPC.downloadStart, item, duration),
+    cancel: (taskId: string) => ipcRenderer.invoke(IPC.downloadCancel, taskId),
+    dismiss: (taskId: string) => ipcRenderer.invoke(IPC.downloadDismiss, taskId),
+    showInFolder: (taskId: string) => ipcRenderer.invoke(IPC.downloadShowInFolder, taskId),
+    onUpdate: (callback: (tasks: DownloadTask[]) => void) => {
+      const listener = (_event: unknown, tasks: DownloadTask[]): void => callback(tasks)
+      ipcRenderer.on(IPC.downloadUpdate, listener)
+      return () => {
+        ipcRenderer.removeListener(IPC.downloadUpdate, listener)
+      }
+    }
   },
   app: {
     onClosing: (callback: () => void) => {

@@ -1,9 +1,13 @@
-import { BrowserWindow, ipcMain, screen } from 'electron'
-import { IPC, type StoreSnapshot } from '../shared/types'
+import { app, BrowserWindow, ipcMain, screen, shell } from 'electron'
+import { IPC, type DownloadTask, type MediaItem, type StoreSnapshot } from '../shared/types'
 import { WindowManager } from './windowManager'
 import { DialogService } from './dialogService'
 import { createElectronStoreBackend, StoreService } from './storeService'
 import { scanMediaFolder, mediaItemsFromPaths } from './mediaService'
+import { DownloadService } from './downloadService'
+
+/** 模块级引用：供退出前（before-quit）清理下载子进程 */
+export const downloadServiceRef: { current: DownloadService | null } = { current: null }
 
 export function registerIpc(win: BrowserWindow): void {
   // 期望窗口尺寸：仅由缩放手柄/形态状态机更新。
@@ -22,6 +26,25 @@ export function registerIpc(win: BrowserWindow): void {
   })
   const dialog = new DialogService(win)
   const store = new StoreService(createElectronStoreBackend())
+
+  const downloadService = new DownloadService({
+    notify: (tasks: DownloadTask[]) => {
+      if (!win.isDestroyed()) win.webContents.send(IPC.downloadUpdate, tasks)
+    }
+  })
+  downloadServiceRef.current = downloadService
+
+  // 主进程统一出口：下载目录可配置（settings.downloadDir），未配置用系统下载目录
+  const downloadDir = (): string => store.getSettings().downloadDir || app.getPath('downloads')
+
+  ipcMain.handle(IPC.downloadStart, (_event, item: MediaItem, duration?: number) => downloadService.start(item, downloadDir(), duration))
+  ipcMain.handle(IPC.downloadGet, () => downloadService.getTasks())
+  ipcMain.handle(IPC.downloadCancel, (_event, taskId: string) => downloadService.cancel(taskId))
+  ipcMain.handle(IPC.downloadDismiss, (_event, taskId: string) => downloadService.dismiss(taskId))
+  ipcMain.handle(IPC.downloadShowInFolder, (_event, taskId: string) => {
+    const task = downloadService.findTask(taskId)
+    if (task) shell.showItemInFolder(task.outPath)
+  })
 
   ipcMain.handle(IPC.windowEnterFullscreen, () => windowManager.enterFullscreen())
   ipcMain.handle(IPC.windowExitFullscreen, () => windowManager.exitFullscreen())

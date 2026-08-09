@@ -2,7 +2,7 @@ import { app, BrowserWindow, protocol, shell } from 'electron'
 import { createReadStream, statSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { extname, join } from 'node:path'
-import { registerIpc } from './ipc'
+import { registerIpc, downloadServiceRef } from './ipc'
 import { IPC } from '../shared/types'
 
 const MEDIA_MIME: Record<string, string> = {
@@ -104,4 +104,9 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('before-quit', () => {
+  // 下载中退出：杀掉 ffmpeg 子进程并删除半成品（避免残留）
+  downloadServiceRef.current?.shutdown()
 })

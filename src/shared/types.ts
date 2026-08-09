@@ -99,7 +99,13 @@ export const IPC = {
   mediaScanFolder: 'media:scan-folder',
   mediaFromPaths: 'media:from-paths',
   appClosing: 'app:closing',
-  appReadyToClose: 'app:ready-to-close'
+  appReadyToClose: 'app:ready-to-close',
+  downloadStart: 'download:start',
+  downloadGet: 'download:get',
+  downloadCancel: 'download:cancel',
+  downloadDismiss: 'download:dismiss',
+  downloadShowInFolder: 'download:show-in-folder',
+  downloadUpdate: 'download:update'
 } as const
 
 export interface IpcApi {
@@ -128,6 +134,14 @@ export interface IpcApi {
   media: {
     scanFolder(folder: string): Promise<MediaItem[]>
     fromPaths(paths: string[]): Promise<MediaItem[]>
+  }
+  download: {
+    get(): Promise<DownloadTask[]>
+    start(item: MediaItem, duration?: number): Promise<DownloadTask | null>
+    cancel(taskId: string): Promise<void>
+    dismiss(taskId: string): Promise<void>
+    showInFolder(taskId: string): Promise<void>
+    onUpdate(callback: (tasks: DownloadTask[]) => void): () => void
   }
   app: {
     onClosing(callback: () => void): () => void

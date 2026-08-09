@@ -41,6 +41,14 @@ Object.defineProperty(window, 'api', {
     dialog: { openFolder: jest.fn(), openFile: jest.fn(), save: jest.fn() },
     store: { getAll: jest.fn(), saveAll: jest.fn(() => Promise.resolve()) },
     media: { scanFolder: jest.fn(() => Promise.resolve([])), fromPaths: jest.fn(() => Promise.resolve([])) },
+    download: {
+      get: jest.fn(() => Promise.resolve([])),
+      start: jest.fn(() => Promise.resolve(null)),
+      cancel: jest.fn(() => Promise.resolve()),
+      dismiss: jest.fn(() => Promise.resolve()),
+      showInFolder: jest.fn(() => Promise.resolve()),
+      onUpdate: jest.fn(() => () => {})
+    },
     app: { onClosing: jest.fn(() => () => {}), readyToClose: jest.fn(() => Promise.resolve()) }
   }
 })
