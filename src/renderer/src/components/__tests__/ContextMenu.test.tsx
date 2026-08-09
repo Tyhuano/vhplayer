@@ -165,3 +165,114 @@ describe('ContextMenu', () => {
     rectSpy.mockRestore()
   })
 })
+
+describe('下载与设置入口', () => {
+  let container: HTMLDivElement
+  let root: Root | null = null
+
+  function renderMenu(): void {
+    act(() => {
+      root = createRoot(container)
+      root.render(<ContextMenu />)
+    })
+  }
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    useAppStore.setState({
+      menuOpen: true,
+      menuX: 100,
+      menuY: 60,
+      favorites: { id: 'favorites', name: '收藏', items: [], createdAt: 0 },
+      settingsOpen: false
+    })
+  })
+
+  afterEach(() => {
+    act(() => {
+      root?.unmount()
+      root = null
+      container.remove()
+    })
+  })
+
+  it('m3u8 项 → 下载 MP4 可用', () => {
+    useAppStore.setState({
+      instances: [0, 1, 2, 3].map((id) => ({
+        id,
+        playlistId: id === 0 ? 'p1' : null,
+        currentIndex: 0,
+        playMode: 'order' as const,
+        isPlaying: false,
+        volume: 1,
+        rate: 1,
+        scaleMode: 'contain' as const
+      })),
+      playlists: [
+        {
+          id: 'p1',
+          name: '流',
+          items: [{ id: 'm1', title: '流', sourceType: 'm3u8' as const, value: 'https://a.com/1.m3u8' }],
+          createdAt: 1
+        }
+      ]
+    })
+    renderMenu()
+    const item = Array.from(container.querySelectorAll('.menu-item')).find((e) =>
+      e.textContent?.includes('下载 MP4')
+    ) as HTMLElement
+    expect(item.classList.contains('disabled')).toBe(false)
+  })
+
+  it('非 m3u8 项 → 下载 MP4 禁用', () => {
+    useAppStore.setState({
+      instances: [0, 1, 2, 3].map((id) => ({
+        id,
+        playlistId: id === 0 ? 'p1' : null,
+        currentIndex: 0,
+        playMode: 'order' as const,
+        isPlaying: false,
+        volume: 1,
+        rate: 1,
+        scaleMode: 'contain' as const
+      })),
+      playlists: [
+        {
+          id: 'p1',
+          name: '本',
+          items: [{ id: 'm1', title: '本', sourceType: 'file' as const, value: 'C:\\a.mp4' }],
+          createdAt: 1
+        }
+      ]
+    })
+    renderMenu()
+    const item = Array.from(container.querySelectorAll('.menu-item')).find((e) =>
+      e.textContent?.includes('下载 MP4')
+    ) as HTMLElement
+    expect(item.classList.contains('disabled')).toBe(true)
+  })
+
+  it('设置项 → openSettings', () => {
+    useAppStore.setState({
+      instances: [0, 1, 2, 3].map((id) => ({
+        id,
+        playlistId: null,
+        currentIndex: 0,
+        playMode: 'order' as const,
+        isPlaying: false,
+        volume: 1,
+        rate: 1,
+        scaleMode: 'contain' as const
+      }))
+    })
+    renderMenu()
+    const item = Array.from(container.querySelectorAll('.menu-item')).find((e) =>
+      e.textContent?.includes('设置')
+    ) as HTMLElement
+    act(() => {
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+    expect(useAppStore.getState().settingsOpen).toBe(true)
+  })
+})

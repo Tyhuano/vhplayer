@@ -143,6 +143,11 @@ export default function PlayerView({ instanceId }: PlayerViewProps): React.JSX.E
         <button title="打开网络流" onClick={() => useAppStore.getState().openUrlInput()}>
           <Icon name="globe" />
         </button>
+        {currentItem?.sourceType === 'm3u8' && (
+          <button title="下载 MP4" onClick={() => void useAppStore.getState().downloadItem()}>
+            <Icon name="download" />
+          </button>
+        )}
         <button
           title={viewMode === 'grid' ? '退出分屏' : '分屏'}
           onClick={() => useAppStore.getState().toggleGridMode()}

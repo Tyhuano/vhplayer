@@ -3,6 +3,8 @@ import PlayerView from './components/PlayerView'
 import SidePanel from './components/SidePanel'
 import ContextMenu from './components/ContextMenu'
 import UrlInputOverlay from './components/UrlInputOverlay'
+import DownloadPopup from './components/DownloadPopup'
+import SettingsOverlay from './components/SettingsOverlay'
 import { Icon } from './components/icons'
 import { useAppStore } from './store/appStore'
 import { flushPositions, persistNow, persistPositionOnly } from './store/appStore'
@@ -55,6 +57,11 @@ export default function App(): React.JSX.Element {
     })
   }, [])
 
+  useEffect(() => {
+    window.api.download.get().then((tasks) => useAppStore.getState().setDownloads(tasks))
+    return window.api.download.onUpdate((tasks) => useAppStore.getState().setDownloads(tasks))
+  }, [])
+
   const isGrid = viewMode === 'grid' && windowMode !== 'mini'
   const isCompact = compact && windowMode !== 'mini'
   // 分屏网格尺寸：窗口变化时重新计算并显式注入，保证 4 分屏始终完整铺满展示
@@ -102,6 +109,8 @@ export default function App(): React.JSX.Element {
           }}
         />
       )}
+      <DownloadPopup />
+      <SettingsOverlay />
     </div>
   )
 }

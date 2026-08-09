@@ -122,3 +122,79 @@ describe('PlayerView 记忆续播', () => {
     expect(video.currentTime).toBe(0)
   })
 })
+
+describe('PlayerView 下载按钮', () => {
+  let container: HTMLDivElement
+
+  beforeEach(() => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    useAppStore.setState({
+      playlists: [],
+      favorites: { id: 'favorites', name: '收藏', items: [], createdAt: 0 },
+      instances: [0, 1, 2, 3].map((id) => ({
+        id,
+        playlistId: null,
+        currentIndex: 0,
+        playMode: 'order' as const,
+        isPlaying: false,
+        volume: 1,
+        rate: 1,
+        scaleMode: 'contain' as const
+      }))
+    })
+  })
+
+  afterEach(() => {
+    act(() => {
+      container.remove()
+    })
+  })
+
+  it('当前项为 m3u8 时显示下载按钮', async () => {
+    useAppStore.setState({
+      playlists: [
+        {
+          id: 'p1',
+          name: '流',
+          items: [{ id: 'm1', title: '流', sourceType: 'm3u8', value: 'https://a.com/1.m3u8' }],
+          createdAt: 1
+        }
+      ]
+    })
+    await act(async () => {
+      useAppStore.getState().updateInstance(0, { playlistId: 'p1', currentIndex: 0 })
+    })
+    await act(async () => {
+      createRoot(container).render(<PlayerView instanceId={0} />)
+    })
+    const btn = Array.from(container.querySelectorAll('.player-actions button')).find(
+      (b) => (b as HTMLElement).title === '下载 MP4'
+    )
+    expect(btn).toBeTruthy()
+  })
+
+  it('本地文件项不显示下载按钮', async () => {
+    useAppStore.setState({
+      playlists: [
+        {
+          id: 'p1',
+          name: '本',
+          items: [{ id: 'm1', title: '本', sourceType: 'file', value: 'C:\\a.mp4' }],
+          createdAt: 1
+        }
+      ]
+    })
+    await act(async () => {
+      useAppStore.getState().updateInstance(0, { playlistId: 'p1', currentIndex: 0 })
+    })
+    await act(async () => {
+      createRoot(container).render(<PlayerView instanceId={0} />)
+    })
+    expect(
+      Array.from(container.querySelectorAll('.player-actions button')).some(
+        (b) => (b as HTMLElement).title === '下载 MP4'
+      )
+    ).toBe(false)
+  })
+})

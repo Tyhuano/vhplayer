@@ -137,10 +137,15 @@ export default function ContextMenu(): React.JSX.Element | null {
       ]
     },
     { id: 'div1', label: '', divider: true },
-    { id: 'download', label: '下载 MP4', disabled: true },
+    {
+      id: 'download',
+      label: '下载 MP4',
+      disabled: !hasItem || item.sourceType !== 'm3u8',
+      action: () => void state.downloadItem()
+    },
     { id: 'import', label: '导入 .mhlb', disabled: true },
     { id: 'export', label: '导出 .mhlb', disabled: true },
-    { id: 'settings', label: '设置', disabled: true }
+    { id: 'settings', label: '设置', action: () => state.openSettings() }
   ]
 
   const renderEntry = (entry: MenuEntry): React.JSX.Element => {
